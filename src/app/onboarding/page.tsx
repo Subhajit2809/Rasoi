@@ -156,6 +156,17 @@ export default function OnboardingPage() {
 
     const supabase = createClient();
 
+    // Force the browser client to read the latest session from cookies
+    // before making any DB calls — required after server-side OAuth callback.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Session missing — send back to login
+      setError("Session expired. Please sign in again.");
+      setLoading(false);
+      router.replace("/login");
+      return;
+    }
+
     if (householdId) {
       // User went back — update existing row
       const { error: upErr } = await supabase
