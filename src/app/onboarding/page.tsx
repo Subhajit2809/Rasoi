@@ -170,7 +170,7 @@ export default function OnboardingPage() {
         .insert({ name: householdName.trim(), household_size: householdSize })
         .select("id")
         .single();
-      if (insErr || !data) { setError("Couldn't create household. Please try again."); setLoading(false); return; }
+      if (insErr || !data) { setError(`Couldn't create household: ${insErr?.message ?? "no data returned"}`); setLoading(false); return; }
       setHouseholdId(data.id);
     }
 
