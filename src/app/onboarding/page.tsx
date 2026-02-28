@@ -165,7 +165,24 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
+    // ── DEBUG (remove before merge) ──────────────────────────────────────
+    const _supa = createClient();
+    const { data: _sd, error: _se } = await _supa.auth.getSession();
+    console.log("[DEBUG] getSession result:", {
+      session: _sd?.session
+        ? {
+            access_token: _sd.session.access_token?.slice(0, 40) + "…",
+            expires_at: _sd.session.expires_at,
+            user_id: _sd.session.user?.id,
+          }
+        : null,
+      error: _se?.message ?? null,
+    });
+    console.log("[DEBUG] createClient() instance:", _supa);
+    // ─────────────────────────────────────────────────────────────────────
+
     const db = await getDb();
+    console.log("[DEBUG] getDb() returned:", db ? "authenticated client ✓" : "null — no session");
     if (!db) {
       setError("Session expired. Please sign in again.");
       setLoading(false);
