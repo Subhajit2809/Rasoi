@@ -156,16 +156,22 @@ export default function OnboardingPage() {
 
     const supabase = createClient();
 
-    // Force the browser client to read the latest session from cookies
-    // before making any DB calls — required after server-side OAuth callback.
+    // After a server-side OAuth callback, @supabase/ssr stores the session
+    // in cookies but may not populate the client's in-memory auth state,
+    // causing DB requests to be sent without an Authorization header.
+    // getSession() reads the cookies; setSession() injects the tokens into
+    // the client's in-memory state so every subsequent request is authenticated.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      // Session missing — send back to login
       setError("Session expired. Please sign in again.");
       setLoading(false);
       router.replace("/login");
       return;
     }
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
 
     if (householdId) {
       // User went back — update existing row
@@ -194,7 +200,11 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
-    const { error: upErr } = await createClient()
+    const supabase2 = createClient();
+    const { data: { session: s2 } } = await supabase2.auth.getSession();
+    if (s2) await supabase2.auth.setSession({ access_token: s2.access_token, refresh_token: s2.refresh_token });
+
+    const { error: upErr } = await supabase2
       .from("households")
       .update({ diet_pref: dietPref, region })
       .eq("id", householdId);
@@ -211,6 +221,8 @@ export default function OnboardingPage() {
     setError("");
 
     const supabase = createClient();
+    const { data: { session: s3 } } = await supabase.auth.getSession();
+    if (s3) await supabase.auth.setSession({ access_token: s3.access_token, refresh_token: s3.refresh_token });
 
     if (checked.size > 0) {
       const rows = Array.from(checked).map((item_name) => ({
