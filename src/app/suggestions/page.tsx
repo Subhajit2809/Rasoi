@@ -1,0 +1,615 @@
+"use client";
+
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@/hooks/useUser";
+import { useHousehold } from "@/hooks/useHousehold";
+import { useFridgeItems } from "@/hooks/useFridgeItems";
+import type { Recipe, FridgeItem, PantryStaple } from "@/types";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface IngredientStatus {
+  name: string;
+  qty: string;
+  have: boolean;
+  expiring: boolean;  // matched fridge item expires within 2 days
+  deductId?: string;  // perishable fridge_item id
+}
+
+interface ScoredRecipe {
+  recipe: Recipe;
+  score: number;           // final score (may exceed 1 due to bonuses)
+  matchCount: number;
+  totalIngredients: number;
+  matchPct: number;        // 0–1
+  urgencyBonus: number;
+  recencyPenalty: number;
+  ingredients: IngredientStatus[];
+  deductIds: string[];
+}
+
+type TimeFilter = "all" | "quick" | "elaborate";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PERISHABLE_CATS = new Set(["Vegetables", "Dairy & Protein"]);
+
+const FRESHNESS_DAYS: Record<string, number> = {
+  dal: 2,
+  sabzi: 2,
+  rice: 3,
+  roti: 1,
+  curry: 2,
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function nameMatches(ingredientRaw: string, itemName: string): boolean {
+  const a = ingredientRaw.toLowerCase();
+  const b = itemName.toLowerCase();
+  if (b.includes(a) || a.includes(b)) return true;
+  const words = a.split(/[\s\-,()]+/).filter((w) => w.length >= 4);
+  return words.some((w) => b.includes(w));
+}
+
+function isExpiringSoon(item: FridgeItem): boolean {
+  if (!item.estimated_expiry) return false;
+  const diffMs = new Date(item.estimated_expiry).getTime() - Date.now();
+  const diffDays = diffMs / 86_400_000;
+  return diffDays >= 0 && diffDays <= 2;
+}
+
+function dietCompatible(
+  recipeDiet: string,
+  householdDiet: string
+): boolean {
+  if (householdDiet === "nonveg") return true;
+  if (householdDiet === "eggetarian") return recipeDiet === "veg" || recipeDiet === "eggetarian";
+  return recipeDiet === "veg";
+}
+
+function getFreshnessForCategory(category: string): number {
+  return FRESHNESS_DAYS[category] ?? 2;
+}
+
+function scoreRecipes(
+  recipes: Recipe[],
+  fridgeItems: FridgeItem[],
+  pantryStaples: PantryStaple[],
+  recentDishNames: Set<string>,
+  householdDiet: string
+): ScoredRecipe[] {
+  const pantryNames = pantryStaples.map((p) => p.item_name);
+
+  return recipes
+    .filter((r) => dietCompatible(r.diet_type, householdDiet))
+    .map((recipe) => {
+      const usedFridgeIds = new Set<string>();
+      const deductIds: string[] = [];
+      let matchCount = 0;
+      let expiringCount = 0;
+
+      const ingredients: IngredientStatus[] = recipe.ingredients.map((ing) => {
+        // Check fridge first
+        const fridgeMatch = fridgeItems.find(
+          (fi) => !usedFridgeIds.has(fi.id) && nameMatches(ing.name, fi.item_name)
+        );
+
+        if (fridgeMatch) {
+          matchCount++;
+          usedFridgeIds.add(fridgeMatch.id);
+          const expiring = isExpiringSoon(fridgeMatch);
+          if (expiring) expiringCount++;
+          if (PERISHABLE_CATS.has(fridgeMatch.category)) {
+            deductIds.push(fridgeMatch.id);
+          }
+          return { name: ing.name, qty: ing.qty, have: true, expiring, deductId: fridgeMatch.id };
+        }
+
+        // Check pantry
+        const inPantry = pantryNames.some((p) => nameMatches(ing.name, p));
+        if (inPantry) {
+          matchCount++;
+          return { name: ing.name, qty: ing.qty, have: true, expiring: false };
+        }
+
+        return { name: ing.name, qty: ing.qty, have: false, expiring: false };
+      });
+
+      const total = recipe.ingredients.length;
+      const matchPct = total > 0 ? matchCount / total : 0;
+      const urgencyBonus = expiringCount * 0.15;
+      const recencyPenalty = recentDishNames.has(recipe.name.toLowerCase()) ? 0.3 : 0;
+      const score = Math.max(0, matchPct + urgencyBonus - recencyPenalty);
+
+      return {
+        recipe,
+        score,
+        matchCount,
+        totalIngredients: total,
+        matchPct,
+        urgencyBonus,
+        recencyPenalty,
+        ingredients,
+        deductIds,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function MatchBar({ pct }: { pct: number }) {
+  const color =
+    pct >= 0.65 ? "bg-green-500" : pct >= 0.35 ? "bg-amber-400" : "bg-gray-300";
+  return (
+    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all ${color}`}
+        style={{ width: `${Math.min(100, Math.round(pct * 100))}%` }}
+      />
+    </div>
+  );
+}
+
+function MatchLabel({ pct, matchCount, total }: { pct: number; matchCount: number; total: number }) {
+  if (pct >= 1) {
+    return <span className="text-xs font-semibold text-green-600">✅ All ingredients</span>;
+  }
+  const color = pct >= 0.65 ? "text-green-600" : pct >= 0.35 ? "text-amber-600" : "text-gray-500";
+  return (
+    <span className={`text-xs font-semibold ${color}`}>
+      {matchCount}/{total} match ({Math.round(pct * 100)}%)
+    </span>
+  );
+}
+
+function RecipeCard({
+  sr,
+  rank,
+  onClick,
+}: {
+  sr: ScoredRecipe;
+  rank: number;
+  onClick: () => void;
+}) {
+  const missing = sr.ingredients.filter((i) => !i.have);
+  const expiring = sr.ingredients.filter((i) => i.expiring);
+  const borderColor =
+    sr.matchPct >= 0.65 ? "border-green-400" : sr.matchPct >= 0.35 ? "border-amber-400" : "border-gray-200";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left bg-white rounded-2xl border-l-4 ${borderColor} shadow-sm p-4 flex flex-col gap-2 active:scale-[0.98] transition-transform`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {rank === 1 && (
+              <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                ⭐ Top Pick
+              </span>
+            )}
+            {expiring.length > 0 && (
+              <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                🔥 Use soon
+              </span>
+            )}
+          </div>
+          <h3 className="font-semibold text-gray-900 mt-1 leading-snug">{sr.recipe.name}</h3>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {sr.recipe.region} · {sr.recipe.category} · ⏱ {sr.recipe.cook_time_mins} min
+          </p>
+        </div>
+        <div className="text-gray-400 text-lg flex-shrink-0">›</div>
+      </div>
+
+      <div className="space-y-1">
+        <MatchBar pct={sr.matchPct} />
+        <MatchLabel pct={sr.matchPct} matchCount={sr.matchCount} total={sr.totalIngredients} />
+      </div>
+
+      {missing.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-0.5">
+          {missing.slice(0, 4).map((m) => (
+            <span
+              key={m.name}
+              className="text-xs bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full"
+            >
+              ✕ {m.name}
+            </span>
+          ))}
+          {missing.length > 4 && (
+            <span className="text-xs text-gray-400 px-1 py-0.5">
+              +{missing.length - 4} more
+            </span>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
+
+function RecipeDetailSheet({
+  sr,
+  householdId,
+  onClose,
+  onLogged,
+}: {
+  sr: ScoredRecipe;
+  householdId: string;
+  onClose: () => void;
+  onLogged: (dishName: string) => void;
+}) {
+  const [closing, setClosing] = useState(false);
+  const [logging, setLogging] = useState(false);
+  const [toast, setToast] = useState(false);
+
+  const close = useCallback(() => {
+    setClosing(true);
+    setTimeout(onClose, 260);
+  }, [onClose]);
+
+  async function handleLog() {
+    setLogging(true);
+    const supabase = createClient();
+    const now = new Date().toISOString();
+    const freshnessForCat = getFreshnessForCategory(sr.recipe.category);
+
+    try {
+      await Promise.all([
+        supabase.from("cooked_items").insert({
+          household_id: householdId,
+          dish_name: sr.recipe.name,
+          cooked_at: now,
+          freshness_days: freshnessForCat,
+          status: "fresh",
+        }),
+        supabase.from("meal_log").insert({
+          household_id: householdId,
+          dish_name: sr.recipe.name,
+          date: now.slice(0, 10),
+        }),
+        sr.deductIds.length > 0
+          ? supabase.from("fridge_items").delete().in("id", sr.deductIds)
+          : Promise.resolve(),
+      ]);
+
+      setToast(true);
+      setTimeout(() => {
+        onLogged(sr.recipe.name);
+        close();
+      }, 1200);
+    } catch {
+      setLogging(false);
+    }
+  }
+
+  return (
+    <div
+      className={`fixed inset-0 z-50 flex flex-col justify-end ${closing ? "animate-fade-out" : "animate-fade-in"}`}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={close} />
+
+      {/* Sheet */}
+      <div
+        className={`relative bg-white rounded-t-3xl w-full max-h-[90vh] flex flex-col ${closing ? "animate-slide-down" : "animate-slide-up"}`}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{sr.recipe.name}</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {sr.recipe.region} · {sr.recipe.category} · ⏱ {sr.recipe.cook_time_mins} min
+              </p>
+            </div>
+            <button
+              onClick={close}
+              className="text-gray-400 text-2xl leading-none mt-0.5 flex-shrink-0"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6 space-y-5">
+          {/* Ingredients */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+              Ingredients
+            </h3>
+            <div className="space-y-2">
+              {sr.ingredients.map((ing) => (
+                <div key={ing.name} className="flex items-center gap-3">
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      ing.have
+                        ? ing.expiring
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-green-100 text-green-700"
+                        : "bg-red-50 text-red-500"
+                    }`}
+                  >
+                    {ing.have ? "✓" : "✕"}
+                  </span>
+                  <span className={`text-sm flex-1 ${ing.have ? "text-gray-800" : "text-gray-400"}`}>
+                    {ing.name}
+                  </span>
+                  <span className="text-xs text-gray-400">{ing.qty}</span>
+                  {ing.expiring && (
+                    <span className="text-xs text-orange-600 font-medium">use soon</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+              Instructions
+            </h3>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              {sr.recipe.instructions}
+            </p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="px-5 pb-8 pt-3 border-t border-gray-100">
+          {toast && (
+            <div className="mb-3 px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-xl text-center animate-slide-in-right">
+              🍳 Logged! Enjoy your meal.
+            </div>
+          )}
+          <button
+            onClick={handleLog}
+            disabled={logging || toast}
+            className="w-full py-4 rounded-2xl bg-[#D2691E] text-white font-semibold text-base disabled:opacity-60 active:scale-[0.98] transition-transform"
+          >
+            {logging ? "Logging…" : "🍳 I Made This!"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function SuggestionsPage() {
+  const router = useRouter();
+  const { user, loading: userLoading } = useUser();
+  const { household, loading: householdLoading } = useHousehold();
+  const { items: fridgeItems, loading: fridgeLoading } = useFridgeItems(household?.id);
+
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [pantryStaples, setPantryStaples] = useState<PantryStaple[]>([]);
+  const [recentDishes, setRecentDishes] = useState<Set<string>>(new Set());
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [selectedRecipe, setSelectedRecipe] = useState<ScoredRecipe | null>(null);
+  const [loggedDishes, setLoggedDishes] = useState<Set<string>>(new Set());
+
+  // Auth redirects
+  useEffect(() => {
+    if (!userLoading && !user) router.replace("/login");
+  }, [user, userLoading, router]);
+
+  useEffect(() => {
+    if (!householdLoading && user && !household) router.replace("/onboarding");
+  }, [household, householdLoading, user, router]);
+
+  // Fetch recipes, pantry staples, recent meal_log
+  useEffect(() => {
+    if (!household) return;
+
+    async function loadData() {
+      setDataLoading(true);
+      const supabase = createClient();
+
+      const threeDaysAgo = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10);
+
+      const [recipesRes, pantryRes, mealLogRes] = await Promise.all([
+        supabase.from("recipes").select("*"),
+        supabase.from("pantry_staples").select("*").eq("household_id", household!.id),
+        supabase
+          .from("meal_log")
+          .select("dish_name")
+          .eq("household_id", household!.id)
+          .gte("date", threeDaysAgo),
+      ]);
+
+      setRecipes((recipesRes.data ?? []) as Recipe[]);
+      setPantryStaples(pantryRes.data ?? []);
+      setRecentDishes(
+        new Set((mealLogRes.data ?? []).map((m: { dish_name: string }) => m.dish_name.toLowerCase()))
+      );
+      setDataLoading(false);
+    }
+
+    loadData();
+  }, [household]);
+
+  // Score + sort recipes
+  const scoredRecipes = useMemo(() => {
+    if (!household || !recipes.length) return [];
+    return scoreRecipes(
+      recipes,
+      fridgeItems,
+      pantryStaples,
+      recentDishes,
+      household.diet_pref
+    );
+  }, [recipes, fridgeItems, pantryStaples, recentDishes, household]);
+
+  // Apply time filter + take top 5
+  const displayedRecipes = useMemo(() => {
+    let filtered = scoredRecipes;
+    if (timeFilter === "quick") filtered = filtered.filter((sr) => sr.recipe.cook_time_mins < 20);
+    if (timeFilter === "elaborate") filtered = filtered.filter((sr) => sr.recipe.cook_time_mins > 30);
+    return filtered.slice(0, 5);
+  }, [scoredRecipes, timeFilter]);
+
+  const loading = userLoading || householdLoading || fridgeLoading || dataLoading;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center">
+        <div className="text-[#D2691E] text-lg font-medium animate-pulse">Finding recipes…</div>
+      </div>
+    );
+  }
+
+  if (!user || !household) return null;
+
+  return (
+    <div className="min-h-screen bg-[#FFF8F0] pb-content-safe">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
+        <button
+          onClick={() => router.back()}
+          className="text-gray-500 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+        >
+          ‹
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Aaj Kya Banaye? 🍽️</h1>
+          <p className="text-xs text-gray-500">Ranked by what you have</p>
+        </div>
+      </div>
+
+      {/* Time filter chips */}
+      <div className="flex gap-2 px-4 pt-4 pb-2 overflow-x-auto no-scrollbar">
+        {(
+          [
+            { key: "all", label: "All" },
+            { key: "quick", label: "⚡ Quick (<20 min)" },
+            { key: "elaborate", label: "🍲 Elaborate (>30 min)" },
+          ] as { key: TimeFilter; label: string }[]
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setTimeFilter(key)}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              timeFilter === key
+                ? "bg-[#D2691E] text-white"
+                : "bg-white text-gray-600 border border-gray-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Fridge context pill */}
+      <div className="px-4 pb-3">
+        <p className="text-xs text-gray-400">
+          {fridgeItems.length > 0
+            ? `${fridgeItems.length} item${fridgeItems.length > 1 ? "s" : ""} in fridge`
+            : "No fridge items — results based on pantry staples"}{" "}
+          ·{" "}
+          {scoredRecipes.length} recipe{scoredRecipes.length !== 1 ? "s" : ""} matched
+        </p>
+      </div>
+
+      {/* Recipe cards */}
+      <div className="px-4 space-y-3">
+        {displayedRecipes.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center shadow-sm mx-0">
+            <div className="text-4xl mb-3">
+              {timeFilter !== "all" ? "⏱️" : "🥬"}
+            </div>
+            <p className="font-semibold text-[#3D2010]">
+              {timeFilter !== "all"
+                ? "No recipes in this time range"
+                : "Add some ingredients to get meal ideas"}
+            </p>
+            <p className="text-sm text-[#8B5E3C] mt-1 leading-relaxed">
+              {timeFilter !== "all" ? (
+                <button
+                  onClick={() => setTimeFilter("all")}
+                  className="text-[#D2691E] underline font-medium"
+                >
+                  Show all recipes
+                </button>
+              ) : (
+                <>
+                  Tap{" "}
+                  <button
+                    onClick={() => router.push("/add-items")}
+                    className="text-[#D2691E] underline font-medium"
+                  >
+                    + Add Items
+                  </button>{" "}
+                  to stock your fridge
+                </>
+              )}
+            </p>
+          </div>
+        ) : (
+          displayedRecipes.map((sr, idx) => (
+            <RecipeCard
+              key={sr.recipe.id}
+              sr={sr}
+              rank={idx + 1}
+              onClick={() => setSelectedRecipe(sr)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Logged dishes indicator */}
+      {loggedDishes.size > 0 && (
+        <div className="px-4 mt-4">
+          <p className="text-xs text-green-600 font-medium text-center">
+            ✅ {Array.from(loggedDishes).join(", ")} logged
+          </p>
+        </div>
+      )}
+
+      {/* Recipe detail bottom sheet */}
+      {selectedRecipe && (
+        <RecipeDetailSheet
+          sr={selectedRecipe}
+          householdId={household.id}
+          onClose={() => setSelectedRecipe(null)}
+          onLogged={(name) => {
+            setLoggedDishes((prev) => new Set(Array.from(prev).concat(name)));
+            setRecentDishes((prev) => new Set(Array.from(prev).concat(name.toLowerCase())));
+          }}
+        />
+      )}
+
+      {/* Bottom nav */}
+      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 flex pb-safe z-20">
+        {[
+          { href: "/", label: "🧊", text: "Fridge" },
+          { href: "/i-cooked", label: "🍳", text: "Cook" },
+          { href: "/grocery", label: "🛒", text: "Grocery" },
+        ].map(({ href, label, text }) => (
+          <button
+            key={href}
+            onClick={() => router.push(href)}
+            className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-gray-400"
+          >
+            <span className="text-xl">{label}</span>
+            <span className="text-xs font-medium">{text}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}

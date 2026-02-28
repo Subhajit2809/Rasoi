@@ -1,0 +1,20 @@
+# deps
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# env
+.env*.local
+
+# PWA generated files
+/public/sw.js
+/public/workbox-*.js
+/public/sw.js.map
+/public/workbox-*.js.map
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*

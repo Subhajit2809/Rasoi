@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slideInRight {
+  from { transform: translateX(48px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-48px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.animate-slide-up   { animation: slideUp   0.34s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-slide-down { animation: slideDown 0.26s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-fade-in    { animation: fadeIn    0.25s ease-out both; }
+.animate-fade-out   { animation: fadeOut   0.22s ease-in  both; }
+
+/* ─── iPhone safe-area utilities ──────────────────────────────────────────────
+   Use .pb-safe on fixed bottom navs so content isn't hidden behind
+   the home indicator on notched iPhones.
+   Use .pb-content-safe on page wrappers to add matching bottom padding.
+   ─────────────────────────────────────────────────────────────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Page content needs room for nav height (4rem) + home indicator gap */
+.pb-content-safe {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* No horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Hide scrollbars (for horizontal filter chips) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

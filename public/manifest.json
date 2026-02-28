@@ -1,0 +1,56 @@
+{
+  "name": "Rasoi",
+  "short_name": "Rasoi",
+  "description": "Smart kitchen assistant for Indian households",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8F0",
+  "theme_color": "#D2691E",
+  "categories": ["food", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Items",
+      "short_name": "Add",
+      "description": "Add items to your fridge",
+      "url": "/add-items",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Grocery List",
+      "short_name": "Grocery",
+      "description": "View your grocery list",
+      "url": "/grocery",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

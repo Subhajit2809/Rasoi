@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- App background: warm terracotta rounded square -->
+  <rect width="192" height="192" rx="40" fill="#D2691E"/>
+
+  <!-- Subtle inner glow ring -->
+  <rect x="6" y="6" width="180" height="180" rx="35" fill="none"
+        stroke="rgba(255,220,180,0.25)" stroke-width="3"/>
+
+  <!-- Steam curls above the pot lid -->
+  <path d="M72 50 C69 45 71 40 68 35"
+        fill="none" stroke="rgba(255,255,255,0.65)"
+        stroke-width="5" stroke-linecap="round"/>
+  <path d="M96 47 C93 42 95 37 92 32"
+        fill="none" stroke="rgba(255,255,255,0.65)"
+        stroke-width="5" stroke-linecap="round"/>
+  <path d="M120 50 C117 45 119 40 116 35"
+        fill="none" stroke="rgba(255,255,255,0.65)"
+        stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Lid knob -->
+  <circle cx="96" cy="65" r="8" fill="white"/>
+
+  <!-- Pot lid -->
+  <rect x="42" y="71" width="108" height="20" rx="10" fill="white"/>
+
+  <!-- Pot body -->
+  <path d="M48,91 L48,148 Q48,162 62,162 L130,162 Q144,162 144,148 L144,91 Z"
+        fill="white"/>
+
+  <!-- Left handle arc -->
+  <path d="M48,100 Q28,100 28,114 Q28,128 48,128"
+        fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Right handle arc -->
+  <path d="M144,100 Q164,100 164,114 Q164,128 144,128"
+        fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Decorative spoon/ladle silhouette on pot body -->
+  <ellipse cx="96" cy="135" rx="20" ry="14" fill="#D2691E" opacity="0.18"/>
+  <rect x="94" y="108" width="4" height="22" rx="2" fill="#D2691E" opacity="0.18"/>
+</svg>
