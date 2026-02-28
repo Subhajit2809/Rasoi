@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, createClientWithToken } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/useUser";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -147,6 +147,17 @@ export default function OnboardingPage() {
     });
   }
 
+  // ── helpers ──
+
+  // Gets an authenticated DB client with the JWT explicitly pinned in headers.
+  // Works around @supabase/ssr not injecting the session into PostgREST calls
+  // after a server-side OAuth callback.
+  async function getDb() {
+    const { data: { session } } = await createClient().auth.getSession();
+    if (!session) return null;
+    return createClientWithToken(session.access_token);
+  }
+
   // ── step handlers ──
 
   async function handleStep1Next() {
@@ -154,35 +165,24 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-
-    // After a server-side OAuth callback, @supabase/ssr stores the session
-    // in cookies but may not populate the client's in-memory auth state,
-    // causing DB requests to be sent without an Authorization header.
-    // getSession() reads the cookies; setSession() injects the tokens into
-    // the client's in-memory state so every subsequent request is authenticated.
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const db = await getDb();
+    if (!db) {
       setError("Session expired. Please sign in again.");
       setLoading(false);
       router.replace("/login");
       return;
     }
-    await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-    });
 
     if (householdId) {
       // User went back — update existing row
-      const { error: upErr } = await supabase
+      const { error: upErr } = await db
         .from("households")
         .update({ name: householdName.trim(), household_size: householdSize })
         .eq("id", householdId);
       if (upErr) { setError("Couldn't save. Please try again."); setLoading(false); return; }
     } else {
       // First time — insert; DB trigger auto-inserts household_members row
-      const { data, error: insErr } = await supabase
+      const { data, error: insErr } = await db
         .from("households")
         .insert({ name: householdName.trim(), household_size: householdSize })
         .select("id")
@@ -200,11 +200,10 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
-    const supabase2 = createClient();
-    const { data: { session: s2 } } = await supabase2.auth.getSession();
-    if (s2) await supabase2.auth.setSession({ access_token: s2.access_token, refresh_token: s2.refresh_token });
+    const db = await getDb();
+    if (!db) { setError("Session expired. Please sign in again."); setLoading(false); return; }
 
-    const { error: upErr } = await supabase2
+    const { error: upErr } = await db
       .from("households")
       .update({ diet_pref: dietPref, region })
       .eq("id", householdId);
@@ -220,20 +219,17 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { data: { session: s3 } } = await supabase.auth.getSession();
-    if (s3) await supabase.auth.setSession({ access_token: s3.access_token, refresh_token: s3.refresh_token });
-
     if (checked.size > 0) {
-      const rows = Array.from(checked).map((item_name) => ({
-        household_id: householdId,
-        item_name,
-        category: PANTRY.find((c) => c.items.includes(item_name))?.category ?? "Other",
-      }));
-
-      const { error: staplesErr } = await supabase.from("pantry_staples").insert(rows);
-      if (staplesErr) console.error("[onboarding] pantry_staples:", staplesErr.message);
-      // non-fatal — household already exists; continue regardless
+      const db = await getDb();
+      if (db) {
+        const rows = Array.from(checked).map((item_name) => ({
+          household_id: householdId,
+          item_name,
+          category: PANTRY.find((c) => c.items.includes(item_name))?.category ?? "Other",
+        }));
+        const { error: staplesErr } = await db.from("pantry_staples").insert(rows);
+        if (staplesErr) console.error("[onboarding] pantry_staples:", staplesErr.message);
+      }
     }
 
     router.replace("/");
