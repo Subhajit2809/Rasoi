@@ -10,9 +10,7 @@ import type { Database } from "./types";
  * automatically forwarded to the browser on each response.
  */
 export async function createClient() {
-  // In Next.js 14 cookies() is synchronous; the async wrapper here
-  // keeps the signature forward-compatible with Next.js 15.
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

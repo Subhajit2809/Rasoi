@@ -3,48 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useUser } from "@/hooks/useUser";
 import { useHouseholdMembers, type MemberProfile } from "@/hooks/useHouseholdMembers";
+import { Avatar } from "@/components/Avatar";
+import { Skeleton } from "@/components/Skeleton";
+import { generateInviteCode } from "@/lib/services/household";
 
 // ─── Invite code section ──────────────────────────────────────────────────────
 
 interface InviteState {
   code: string;
   expiresAt: string;
-}
-
-function Avatar({ member, size = 40 }: { member: MemberProfile; size?: number }) {
-  const initials = (member.display_name ?? "?")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  if (member.avatar_url) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={member.avatar_url}
-        alt={member.display_name ?? "Member"}
-        width={size}
-        height={size}
-        className="rounded-full object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-
-  return (
-    <div
-      className="rounded-full bg-[#FFE8CC] flex items-center justify-center font-bold text-[#D2691E]"
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-    >
-      {initials}
-    </div>
-  );
 }
 
 function InviteSection({ householdId }: { householdId: string }) {
@@ -57,11 +27,7 @@ function InviteSection({ householdId }: { householdId: string }) {
   async function generate() {
     setGen(true);
     setError("");
-    const supabase = createClient();
-    const { data, error: rpcErr } = await supabase.rpc(
-      "generate_household_invite",
-      { p_household_id: householdId }
-    );
+    const { data, error: rpcErr } = await generateInviteCode(householdId);
 
     if (rpcErr) {
       setError("Could not generate invite. Please try again.");
@@ -131,7 +97,6 @@ function InviteSection({ householdId }: { householdId: string }) {
         </button>
       ) : (
         <div className="space-y-3">
-          {/* Code display */}
           <div className="bg-[#FFF8F0] border-2 border-[#D2691E] rounded-2xl p-4 text-center">
             <p className="text-xs text-[#8B5E3C] mb-1 uppercase tracking-widest font-medium">
               Invite Code
@@ -143,8 +108,6 @@ function InviteSection({ householdId }: { householdId: string }) {
               <p className="text-xs text-[#8B5E3C] mt-2">Expires {expiryLabel}</p>
             )}
           </div>
-
-          {/* Action buttons */}
           <div className="flex gap-2">
             <button
               type="button"
@@ -161,8 +124,6 @@ function InviteSection({ householdId }: { householdId: string }) {
               Copy Link
             </button>
           </div>
-
-          {/* Regenerate */}
           <button
             type="button"
             onClick={generate}
@@ -196,9 +157,19 @@ function MembersSection({
 }) {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0] flex items-center gap-3">
-        <div className="w-5 h-5 border-2 border-[#D2691E] border-t-transparent rounded-full animate-spin" />
-        <span className="text-sm text-[#8B5E3C]">Loading members…</span>
+      <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
+        <Skeleton className="h-5 w-36 mb-4" />
+        <div className="space-y-3">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -250,8 +221,17 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#D2691E] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#FFF8F0]">
+        <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347]" />
+        <div className="flex items-center gap-3 px-5 py-4 bg-white border-b border-[#E8C9A0]">
+          <Skeleton className="w-9 h-9 rounded-xl" />
+          <Skeleton className="h-5 w-32 flex-1" />
+        </div>
+        <div className="px-5 py-6 max-w-lg mx-auto space-y-4">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
@@ -273,7 +253,6 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#FFF8F0]">
       <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347]" />
 
-      {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 bg-white border-b border-[#E8C9A0]">
         <Link
           href="/"
@@ -288,7 +267,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="px-5 py-6 max-w-lg mx-auto space-y-4">
-        {/* Household info card */}
         <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
           <h3 className="font-semibold text-[#3D2010] mb-4 flex items-center gap-2">
             <span>🏠</span> Your Kitchen
@@ -304,14 +282,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Members */}
         <MembersSection
           members={members}
           currentUserId={user?.id ?? ""}
           loading={membLoading}
         />
 
-        {/* Invite */}
         <InviteSection householdId={household.id} />
       </div>
     </div>

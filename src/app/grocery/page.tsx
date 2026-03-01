@@ -2,77 +2,24 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
 import { useGroceryList } from "@/hooks/useGroceryList";
 import { Toast } from "@/components/Toast";
+import { UndoToast } from "@/components/UndoToast";
+import { BottomNav } from "@/components/BottomNav";
+import { Skeleton } from "@/components/Skeleton";
+import { nameMatches, dietCompatible, isExpiringSoon } from "@/lib/matching";
+import { PRESET_ITEMS, inferCategory, calcExpiry, type Category } from "@/lib/ingredients";
+import {
+  insertGroceryItems,
+  updateGroceryPurchased,
+  deleteGroceryItem,
+} from "@/lib/services/grocery";
+import { insertFridgeItems } from "@/lib/services/fridge";
+import { fetchAllRecipes, fetchPantryStaples } from "@/lib/services/recipes";
 import type { GroceryItem, FridgeItem, PantryStaple, Recipe } from "@/types";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Category = "Vegetables" | "Dairy & Protein" | "Pantry";
-
-interface PresetItem {
-  name: string;
-  category: Category;
-  unit: string;
-  defaultQty: number;
-  shelfLife: number;
-}
-
-// ─── Preset catalogue (mirrors add-items/page.tsx) ────────────────────────────
-
-const PRESET_ITEMS: PresetItem[] = [
-  // Vegetables
-  { name: "Pyaz (Onion)",         category: "Vegetables",      unit: "pcs",   defaultQty: 6,   shelfLife: 14  },
-  { name: "Tamatar (Tomato)",     category: "Vegetables",      unit: "pcs",   defaultQty: 4,   shelfLife: 5   },
-  { name: "Aloo (Potato)",        category: "Vegetables",      unit: "kg",    defaultQty: 1,   shelfLife: 21  },
-  { name: "Palak (Spinach)",      category: "Vegetables",      unit: "bunch", defaultQty: 1,   shelfLife: 2   },
-  { name: "Gobi (Cauliflower)",   category: "Vegetables",      unit: "pcs",   defaultQty: 1,   shelfLife: 4   },
-  { name: "Capsicum",             category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 7   },
-  { name: "Baingan (Brinjal)",    category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 4   },
-  { name: "Gajar (Carrot)",       category: "Vegetables",      unit: "pcs",   defaultQty: 4,   shelfLife: 10  },
-  { name: "Bhindi (Okra)",        category: "Vegetables",      unit: "g",     defaultQty: 250, shelfLife: 3   },
-  { name: "Hari Mirch",           category: "Vegetables",      unit: "pcs",   defaultQty: 8,   shelfLife: 7   },
-  { name: "Adrak (Ginger)",       category: "Vegetables",      unit: "pcs",   defaultQty: 1,   shelfLife: 14  },
-  { name: "Lahsun (Garlic)",      category: "Vegetables",      unit: "bulb",  defaultQty: 2,   shelfLife: 30  },
-  { name: "Lauki (Bottle Gourd)", category: "Vegetables",      unit: "pcs",   defaultQty: 1,   shelfLife: 7   },
-  { name: "Dhaniya (Coriander)",  category: "Vegetables",      unit: "bunch", defaultQty: 1,   shelfLife: 3   },
-  { name: "Methi Leaves",         category: "Vegetables",      unit: "bunch", defaultQty: 1,   shelfLife: 3   },
-  { name: "Pudina (Mint)",        category: "Vegetables",      unit: "bunch", defaultQty: 1,   shelfLife: 3   },
-  { name: "Nimbu (Lemon)",        category: "Vegetables",      unit: "pcs",   defaultQty: 4,   shelfLife: 14  },
-  { name: "Matar (Peas)",         category: "Vegetables",      unit: "g",     defaultQty: 250, shelfLife: 3   },
-  // Dairy & Protein
-  { name: "Paneer",               category: "Dairy & Protein", unit: "g",     defaultQty: 200, shelfLife: 4   },
-  { name: "Dahi (Yogurt)",        category: "Dairy & Protein", unit: "ml",    defaultQty: 500, shelfLife: 5   },
-  { name: "Doodh (Milk)",         category: "Dairy & Protein", unit: "L",     defaultQty: 1,   shelfLife: 3   },
-  { name: "Eggs",                 category: "Dairy & Protein", unit: "pcs",   defaultQty: 6,   shelfLife: 21  },
-  { name: "Chicken",              category: "Dairy & Protein", unit: "g",     defaultQty: 500, shelfLife: 2   },
-  { name: "Fish",                 category: "Dairy & Protein", unit: "g",     defaultQty: 500, shelfLife: 1   },
-  { name: "Mutton",               category: "Dairy & Protein", unit: "g",     defaultQty: 500, shelfLife: 2   },
-  { name: "Butter",               category: "Dairy & Protein", unit: "g",     defaultQty: 100, shelfLife: 30  },
-  { name: "Fresh Cream",          category: "Dairy & Protein", unit: "ml",    defaultQty: 200, shelfLife: 5   },
-  { name: "Cheese",               category: "Dairy & Protein", unit: "g",     defaultQty: 200, shelfLife: 14  },
-  { name: "Tofu",                 category: "Dairy & Protein", unit: "g",     defaultQty: 200, shelfLife: 4   },
-  // Pantry
-  { name: "Chawal (Rice)",        category: "Pantry",          unit: "kg",    defaultQty: 1,   shelfLife: 365 },
-  { name: "Atta",                 category: "Pantry",          unit: "kg",    defaultQty: 1,   shelfLife: 60  },
-  { name: "Maida",                category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 90  },
-  { name: "Toor Dal",             category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
-  { name: "Moong Dal",            category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
-  { name: "Chana Dal",            category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
-  { name: "Rajma",                category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
-  { name: "Kabuli Chana",         category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
-  { name: "Cooking Oil",          category: "Pantry",          unit: "L",     defaultQty: 1,   shelfLife: 180 },
-  { name: "Ghee",                 category: "Pantry",          unit: "g",     defaultQty: 200, shelfLife: 180 },
-  { name: "Tomato Puree",         category: "Pantry",          unit: "ml",    defaultQty: 200, shelfLife: 5   },
-  { name: "Bread",                category: "Pantry",          unit: "pcs",   defaultQty: 1,   shelfLife: 7   },
-  { name: "Poha",                 category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 180 },
-  { name: "Besan",                category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 180 },
-  { name: "Coconut Milk",         category: "Pantry",          unit: "ml",    defaultQty: 200, shelfLife: 3   },
-];
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -86,25 +33,6 @@ const STORE_ORDER: Category[] = ["Vegetables", "Dairy & Protein", "Pantry"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function nameMatches(a: string, b: string): boolean {
-  const la = a.toLowerCase();
-  const lb = b.toLowerCase();
-  if (la.includes(lb) || lb.includes(la)) return true;
-  const words = la.split(/[\s\-,()]+/).filter((w) => w.length >= 4);
-  return words.some((w) => lb.includes(w));
-}
-
-function inferCategory(itemName: string): Category {
-  const match = PRESET_ITEMS.find((p) => nameMatches(itemName, p.name));
-  return match?.category ?? "Pantry";
-}
-
-function calcExpiry(shelfLife: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + shelfLife);
-  return d.toISOString();
-}
-
 function storeLabel(category: string): string {
   return STORE_MAP[category] ?? "🏪 Kirana Store";
 }
@@ -117,19 +45,7 @@ function todayString(): string {
   });
 }
 
-// ─── Scoring helpers (mirrors suggestions/page.tsx) ───────────────────────────
-
-function dietCompatible(recipeDiet: string, householdDiet: string): boolean {
-  if (householdDiet === "nonveg") return true;
-  if (householdDiet === "eggetarian") return recipeDiet === "veg" || recipeDiet === "eggetarian";
-  return recipeDiet === "veg";
-}
-
-function isExpiringSoon(item: FridgeItem): boolean {
-  if (!item.estimated_expiry) return false;
-  const diff = (new Date(item.estimated_expiry).getTime() - Date.now()) / 86_400_000;
-  return diff >= 0 && diff <= 2;
-}
+// ─── Scoring helpers ─────────────────────────────────────────────────────────
 
 function computeTopMissingIngredients(
   recipes: Recipe[],
@@ -200,7 +116,6 @@ function GroceryItemRow({
 }) {
   return (
     <div className={`flex items-center gap-3 py-3 px-4 ${item.is_purchased ? "opacity-50" : ""}`}>
-      {/* Checkbox */}
       <button
         onClick={() => onToggle(item.id, item.is_purchased)}
         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -213,8 +128,6 @@ function GroceryItemRow({
           <span className="text-white text-xs font-bold leading-none">✓</span>
         )}
       </button>
-
-      {/* Name + AUTO badge */}
       <div className="flex-1 flex items-center gap-2 min-w-0">
         {item.source === "auto" && !item.is_purchased && (
           <span className="text-xs font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
@@ -227,8 +140,6 @@ function GroceryItemRow({
           {item.item_name}
         </span>
       </div>
-
-      {/* Delete */}
       <button
         onClick={() => onDelete(item.id)}
         className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-xl leading-none w-7 h-7 flex items-center justify-center"
@@ -287,6 +198,9 @@ export default function GroceryPage() {
   const [shareToast, setShareToast] = useState(false);
   const [purchaseToast, setPurchaseToast] = useState("");
 
+  // Undo state for delete
+  const [undoDelete, setUndoDelete] = useState<{ item: GroceryItem } | null>(null);
+
   // Auth redirects
   useEffect(() => {
     if (!userLoading && !user) router.replace("/login");
@@ -301,25 +215,23 @@ export default function GroceryPage() {
     if (!household) return;
     async function load() {
       setDataLoading(true);
-      const supabase = createClient();
-      const [recipesRes, pantryRes] = await Promise.all([
-        supabase.from("recipes").select("*"),
-        supabase.from("pantry_staples").select("*").eq("household_id", household!.id),
+      const [r, p] = await Promise.all([
+        fetchAllRecipes(),
+        fetchPantryStaples(household!.id),
       ]);
-      setRecipes((recipesRes.data ?? []) as Recipe[]);
-      setPantryStaples(pantryRes.data ?? []);
+      setRecipes(r);
+      setPantryStaples(p);
       setDataLoading(false);
     }
     load();
   }, [household]);
 
-  // Auto-sync: upsert missing recipe ingredients + expired fridge items into grocery_list
+  // Auto-sync missing recipe ingredients + expired fridge items
   useEffect(() => {
     if (!household || dataLoading || groceryLoading || autoSynced) return;
     setAutoSynced(true);
 
     async function sync() {
-      const supabase = createClient();
       const existingNames = new Set(groceryItems.map((g) => g.item_name.toLowerCase()));
       const toInsert: {
         household_id: string;
@@ -329,7 +241,6 @@ export default function GroceryPage() {
         is_purchased: boolean;
       }[] = [];
 
-      // 1. Missing ingredients from top-3 recipe suggestions
       if (recipes.length > 0) {
         const missing = computeTopMissingIngredients(
           recipes,
@@ -351,7 +262,6 @@ export default function GroceryPage() {
         }
       }
 
-      // 2. Expired fridge items (need replenishment)
       const now = Date.now();
       for (const fi of fridgeItems) {
         if (
@@ -371,13 +281,12 @@ export default function GroceryPage() {
       }
 
       if (toInsert.length > 0) {
-        await supabase.from("grocery_list").insert(toInsert);
+        await insertGroceryItems(toInsert);
         refetch();
       }
     }
 
     sync();
-    // We intentionally only run this once per page load (autoSynced gate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [household, dataLoading, groceryLoading, autoSynced]);
 
@@ -386,14 +295,13 @@ export default function GroceryPage() {
     const name = inputValue.trim();
     if (!name || !household || !user) return;
     setAdding(true);
-    const supabase = createClient();
-    await supabase.from("grocery_list").insert({
+    await insertGroceryItems([{
       household_id: household.id,
       item_name: name,
       category: inferCategory(name),
       source: "manual",
       is_purchased: false,
-    });
+    }]);
     setInputValue("");
     setAdding(false);
   }, [inputValue, household, user]);
@@ -402,18 +310,15 @@ export default function GroceryPage() {
   const handleToggle = useCallback(
     async (id: string, currentlyPurchased: boolean) => {
       if (!household || !user) return;
-      const supabase = createClient();
 
       if (!currentlyPurchased) {
-        // Mark purchased
-        await supabase.from("grocery_list").update({ is_purchased: true }).eq("id", id);
+        await updateGroceryPurchased(id, true);
 
-        // Auto-add to fridge
         const item = groceryItems.find((g) => g.id === id);
         if (item) {
           const preset = PRESET_ITEMS.find((p) => nameMatches(item.item_name, p.name));
           if (preset) {
-            await supabase.from("fridge_items").insert({
+            await insertFridgeItems([{
               household_id: household.id,
               item_name: preset.name,
               category: preset.category,
@@ -421,9 +326,9 @@ export default function GroceryPage() {
               unit: preset.unit,
               added_by: user.id,
               estimated_expiry: calcExpiry(preset.shelfLife),
-            });
+            }]);
           } else {
-            await supabase.from("fridge_items").insert({
+            await insertFridgeItems([{
               household_id: household.id,
               item_name: item.item_name,
               category: item.category,
@@ -431,25 +336,43 @@ export default function GroceryPage() {
               unit: "pcs",
               added_by: user.id,
               estimated_expiry: null,
-            });
+            }]);
           }
-          // Show purchase toast
           setPurchaseToast(`${item.item_name} added to fridge 🧊`);
           setTimeout(() => setPurchaseToast(""), 2500);
         }
       } else {
-        // Un-purchase (don't touch fridge — item already added)
-        await supabase.from("grocery_list").update({ is_purchased: false }).eq("id", id);
+        await updateGroceryPurchased(id, false);
       }
     },
     [household, user, groceryItems]
   );
 
-  // Delete item
-  const handleDelete = useCallback(async (id: string) => {
-    const supabase = createClient();
-    await supabase.from("grocery_list").delete().eq("id", id);
-  }, []);
+  // Delete item (with undo)
+  const handleDelete = useCallback(
+    (id: string) => {
+      const item = groceryItems.find((g) => g.id === id);
+      if (!item) return;
+      // Optimistic removal — hide from UI immediately
+      setUndoDelete({ item });
+      deleteGroceryItem(id);
+    },
+    [groceryItems]
+  );
+
+  const handleUndoDelete = useCallback(async () => {
+    if (!undoDelete || !household) return;
+    const { item } = undoDelete;
+    await insertGroceryItems([{
+      household_id: household.id,
+      item_name: item.item_name,
+      category: item.category,
+      source: item.source,
+      is_purchased: item.is_purchased,
+    }]);
+    setUndoDelete(null);
+    refetch();
+  }, [undoDelete, household, refetch]);
 
   // Share list as WhatsApp-friendly text
   const handleShare = useCallback(() => {
@@ -498,7 +421,6 @@ export default function GroceryPage() {
     [pending]
   );
 
-  // Items whose category doesn't map to a known store → Kirana Store
   const unknownPending = useMemo(
     () => pending.filter((g) => !(STORE_ORDER as string[]).includes(g.category)),
     [pending]
@@ -509,28 +431,25 @@ export default function GroceryPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FFF8F0]">
-        {/* Skeleton header */}
         <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
           <div className="space-y-2">
-            <div className="h-5 w-32 bg-gray-100 rounded-full animate-pulse" />
-            <div className="h-3 w-20 bg-gray-100 rounded-full animate-pulse" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-3 w-20" />
           </div>
-          <div className="h-9 w-16 bg-gray-100 rounded-xl animate-pulse" />
+          <Skeleton className="h-9 w-16 rounded-xl" />
         </div>
-        {/* Skeleton input */}
         <div className="px-4 py-3 bg-white border-b border-gray-100">
-          <div className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+          <Skeleton className="h-12 w-full rounded-xl" />
         </div>
-        {/* Skeleton sections */}
         <div className="pt-4 px-4 space-y-4">
           {["🥬 Sabzi Mandi", "🥛 Dairy & Other"].map((label) => (
             <div key={label}>
-              <div className="h-3 w-28 bg-gray-100 rounded-full animate-pulse mb-3" />
+              <Skeleton className="h-3 w-28 mb-3" />
               <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50">
                 {[0, 1, 2].map((j) => (
                   <div key={j} className="flex items-center gap-3 py-3 px-4">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
-                    <div className="flex-1 h-4 bg-gray-100 rounded-full animate-pulse" />
+                    <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
+                    <Skeleton className="flex-1 h-4" />
                   </div>
                 ))}
               </div>
@@ -583,6 +502,14 @@ export default function GroceryPage() {
           📋 Copied! Paste in WhatsApp to share.
         </div>
       )}
+
+      {/* Undo delete toast */}
+      <UndoToast
+        message={undoDelete ? `${undoDelete.item.item_name} removed` : ""}
+        visible={!!undoDelete}
+        onUndo={handleUndoDelete}
+        onExpire={() => setUndoDelete(null)}
+      />
 
       {/* Add item input */}
       <div className="px-4 py-3 bg-white border-b border-gray-100">
@@ -642,7 +569,6 @@ export default function GroceryPage() {
               onDelete={handleDelete}
             />
           ))}
-          {/* Unknown-category items go into Kirana Store */}
           {unknownPending.length > 0 && (
             <SectionGroup
               category="Pantry"
@@ -654,7 +580,7 @@ export default function GroceryPage() {
         </div>
       )}
 
-      {/* Purchased section (collapsed by default) */}
+      {/* Purchased section */}
       {purchased.length > 0 && (
         <div className="mx-4 mt-3 mb-2">
           <button
@@ -682,29 +608,10 @@ export default function GroceryPage() {
         </div>
       )}
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 flex pb-safe z-20">
-        {[
-          { href: "/",         icon: "🧊", label: "Fridge"  },
-          { href: "/i-cooked", icon: "🍳", label: "Cook"    },
-          { href: "/grocery",  icon: "🛒", label: "Grocery" },
-        ].map(({ href, icon, label }) => {
-          const active = href === "/grocery";
-          return (
-            <button
-              key={href}
-              onClick={() => router.push(href)}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${
-                active ? "text-[#D2691E]" : "text-gray-400"
-              }`}
-            >
-              <span className="text-xl">{icon}</span>
-              <span className={`text-xs ${active ? "font-bold" : "font-medium"}`}>{label}</span>
-              {active && <span className="w-1 h-1 bg-[#D2691E] rounded-full" />}
-            </button>
-          );
-        })}
-      </nav>
+      {/* Bottom spacing for nav */}
+      <div className="h-20" />
+
+      <BottomNav active="grocery" />
     </div>
   );
 }

@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
+import { BottomNav } from "@/components/BottomNav";
+import { Skeleton } from "@/components/Skeleton";
+import { nameMatches, dietCompatible, isExpiringSoon } from "@/lib/matching";
+import { getFreshnessForCategory } from "@/lib/freshness";
+import { insertCookedItem } from "@/lib/services/cooked";
+import { insertMealLog, fetchAllRecipes, fetchPantryStaples, fetchRecentMealDishes } from "@/lib/services/recipes";
+import { deleteFridgeItems } from "@/lib/services/fridge";
 import type { Recipe, FridgeItem, PantryStaple } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -14,16 +20,16 @@ interface IngredientStatus {
   name: string;
   qty: string;
   have: boolean;
-  expiring: boolean;  // matched fridge item expires within 2 days
-  deductId?: string;  // perishable fridge_item id
+  expiring: boolean;
+  deductId?: string;
 }
 
 interface ScoredRecipe {
   recipe: Recipe;
-  score: number;           // final score (may exceed 1 due to bonuses)
+  score: number;
   matchCount: number;
   totalIngredients: number;
-  matchPct: number;        // 0–1
+  matchPct: number;
   urgencyBonus: number;
   recencyPenalty: number;
   ingredients: IngredientStatus[];
@@ -36,43 +42,7 @@ type TimeFilter = "all" | "quick" | "elaborate";
 
 const PERISHABLE_CATS = new Set(["Vegetables", "Dairy & Protein"]);
 
-const FRESHNESS_DAYS: Record<string, number> = {
-  dal: 2,
-  sabzi: 2,
-  rice: 3,
-  roti: 1,
-  curry: 2,
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function nameMatches(ingredientRaw: string, itemName: string): boolean {
-  const a = ingredientRaw.toLowerCase();
-  const b = itemName.toLowerCase();
-  if (b.includes(a) || a.includes(b)) return true;
-  const words = a.split(/[\s\-,()]+/).filter((w) => w.length >= 4);
-  return words.some((w) => b.includes(w));
-}
-
-function isExpiringSoon(item: FridgeItem): boolean {
-  if (!item.estimated_expiry) return false;
-  const diffMs = new Date(item.estimated_expiry).getTime() - Date.now();
-  const diffDays = diffMs / 86_400_000;
-  return diffDays >= 0 && diffDays <= 2;
-}
-
-function dietCompatible(
-  recipeDiet: string,
-  householdDiet: string
-): boolean {
-  if (householdDiet === "nonveg") return true;
-  if (householdDiet === "eggetarian") return recipeDiet === "veg" || recipeDiet === "eggetarian";
-  return recipeDiet === "veg";
-}
-
-function getFreshnessForCategory(category: string): number {
-  return FRESHNESS_DAYS[category] ?? 2;
-}
+// ─── Scoring ──────────────────────────────────────────────────────────────────
 
 function scoreRecipes(
   recipes: Recipe[],
@@ -92,7 +62,6 @@ function scoreRecipes(
       let expiringCount = 0;
 
       const ingredients: IngredientStatus[] = recipe.ingredients.map((ing) => {
-        // Check fridge first
         const fridgeMatch = fridgeItems.find(
           (fi) => !usedFridgeIds.has(fi.id) && nameMatches(ing.name, fi.item_name)
         );
@@ -108,7 +77,6 @@ function scoreRecipes(
           return { name: ing.name, qty: ing.qty, have: true, expiring, deductId: fridgeMatch.id };
         }
 
-        // Check pantry
         const inPantry = pantryNames.some((p) => nameMatches(ing.name, p));
         if (inPantry) {
           matchCount++;
@@ -255,27 +223,24 @@ function RecipeDetailSheet({
 
   async function handleLog() {
     setLogging(true);
-    const supabase = createClient();
     const now = new Date().toISOString();
     const freshnessForCat = getFreshnessForCategory(sr.recipe.category);
 
     try {
       await Promise.all([
-        supabase.from("cooked_items").insert({
+        insertCookedItem({
           household_id: householdId,
           dish_name: sr.recipe.name,
           cooked_at: now,
           freshness_days: freshnessForCat,
           status: "fresh",
         }),
-        supabase.from("meal_log").insert({
+        insertMealLog({
           household_id: householdId,
           dish_name: sr.recipe.name,
           date: now.slice(0, 10),
         }),
-        sr.deductIds.length > 0
-          ? supabase.from("fridge_items").delete().in("id", sr.deductIds)
-          : Promise.resolve(),
+        deleteFridgeItems(sr.deductIds),
       ]);
 
       setToast(true);
@@ -292,19 +257,13 @@ function RecipeDetailSheet({
     <div
       className={`fixed inset-0 z-50 flex flex-col justify-end ${closing ? "animate-fade-out" : "animate-fade-in"}`}
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={close} />
-
-      {/* Sheet */}
       <div
         className={`relative bg-white rounded-t-3xl w-full max-h-[90vh] flex flex-col ${closing ? "animate-slide-down" : "animate-slide-up"}`}
       >
-        {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 bg-gray-200 rounded-full" />
         </div>
-
-        {/* Header */}
         <div className="px-5 py-3 border-b border-gray-100">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -321,10 +280,7 @@ function RecipeDetailSheet({
             </button>
           </div>
         </div>
-
-        {/* Content */}
         <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6 space-y-5">
-          {/* Ingredients */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Ingredients
@@ -354,8 +310,6 @@ function RecipeDetailSheet({
               ))}
             </div>
           </div>
-
-          {/* Instructions */}
           <div>
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
               Instructions
@@ -365,8 +319,6 @@ function RecipeDetailSheet({
             </p>
           </div>
         </div>
-
-        {/* CTA */}
         <div className="px-5 pb-8 pt-3 border-t border-gray-100">
           {toast && (
             <div className="mb-3 px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-xl text-center animate-slide-in-right">
@@ -418,32 +370,20 @@ export default function SuggestionsPage() {
 
     async function loadData() {
       setDataLoading(true);
-      const supabase = createClient();
-
-      const threeDaysAgo = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10);
-
-      const [recipesRes, pantryRes, mealLogRes] = await Promise.all([
-        supabase.from("recipes").select("*"),
-        supabase.from("pantry_staples").select("*").eq("household_id", household!.id),
-        supabase
-          .from("meal_log")
-          .select("dish_name")
-          .eq("household_id", household!.id)
-          .gte("date", threeDaysAgo),
+      const [r, p, recent] = await Promise.all([
+        fetchAllRecipes(),
+        fetchPantryStaples(household!.id),
+        fetchRecentMealDishes(household!.id),
       ]);
-
-      setRecipes((recipesRes.data ?? []) as Recipe[]);
-      setPantryStaples(pantryRes.data ?? []);
-      setRecentDishes(
-        new Set((mealLogRes.data ?? []).map((m: { dish_name: string }) => m.dish_name.toLowerCase()))
-      );
+      setRecipes(r);
+      setPantryStaples(p);
+      setRecentDishes(recent);
       setDataLoading(false);
     }
 
     loadData();
   }, [household]);
 
-  // Score + sort recipes
   const scoredRecipes = useMemo(() => {
     if (!household || !recipes.length) return [];
     return scoreRecipes(
@@ -455,7 +395,6 @@ export default function SuggestionsPage() {
     );
   }, [recipes, fridgeItems, pantryStaples, recentDishes, household]);
 
-  // Apply time filter + take top 5
   const displayedRecipes = useMemo(() => {
     let filtered = scoredRecipes;
     if (timeFilter === "quick") filtered = filtered.filter((sr) => sr.recipe.cook_time_mins < 20);
@@ -467,8 +406,24 @@ export default function SuggestionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center">
-        <div className="text-[#D2691E] text-lg font-medium animate-pulse">Finding recipes…</div>
+      <div className="min-h-screen bg-[#FFF8F0]">
+        <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
+          <Skeleton className="w-8 h-8 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <div className="flex gap-2 px-4 pt-4 pb-2">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-9 w-24 rounded-full" />
+          ))}
+        </div>
+        <div className="px-4 space-y-3 pt-4">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -571,7 +526,6 @@ export default function SuggestionsPage() {
         )}
       </div>
 
-      {/* Logged dishes indicator */}
       {loggedDishes.size > 0 && (
         <div className="px-4 mt-4">
           <p className="text-xs text-green-600 font-medium text-center">
@@ -580,7 +534,6 @@ export default function SuggestionsPage() {
         </div>
       )}
 
-      {/* Recipe detail bottom sheet */}
       {selectedRecipe && (
         <RecipeDetailSheet
           sr={selectedRecipe}
@@ -593,23 +546,10 @@ export default function SuggestionsPage() {
         />
       )}
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 flex pb-safe z-20">
-        {[
-          { href: "/", label: "🧊", text: "Fridge" },
-          { href: "/i-cooked", label: "🍳", text: "Cook" },
-          { href: "/grocery", label: "🛒", text: "Grocery" },
-        ].map(({ href, label, text }) => (
-          <button
-            key={href}
-            onClick={() => router.push(href)}
-            className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-gray-400"
-          >
-            <span className="text-xl">{label}</span>
-            <span className="text-xs font-medium">{text}</span>
-          </button>
-        ))}
-      </nav>
+      {/* Bottom spacing for nav */}
+      <div className="h-20" />
+
+      <BottomNav active="fridge" />
     </div>
   );
 }

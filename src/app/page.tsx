@@ -9,114 +9,19 @@ import { useHouseholdMembers, type MemberProfile } from "@/hooks/useHouseholdMem
 import { useCookedItems } from "@/hooks/useCookedItems";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
 import { Toast } from "@/components/Toast";
+import { UndoToast } from "@/components/UndoToast";
+import { Avatar } from "@/components/Avatar";
+import { BottomNav } from "@/components/BottomNav";
+import { Skeleton } from "@/components/Skeleton";
+import { restoreCookedItem } from "@/lib/services/cooked";
+import {
+  getDaysRemaining,
+  freshnessLevel,
+  FRESHNESS_CONFIG,
+  relativeTime,
+  formatRemaining,
+} from "@/lib/freshness";
 import type { CookedItem, FridgeItem } from "@/types";
-
-// ─── Freshness helpers ────────────────────────────────────────────────────────
-
-type FreshnessLevel = "fresh" | "soon" | "toss";
-
-function getDaysRemaining(item: CookedItem): number {
-  const elapsed =
-    (Date.now() - new Date(item.cooked_at).getTime()) / 86_400_000;
-  return item.freshness_days - elapsed;
-}
-
-function freshnessLevel(daysRemaining: number): FreshnessLevel {
-  if (daysRemaining > 1.5) return "fresh";
-  if (daysRemaining > 0.5) return "soon";
-  return "toss";
-}
-
-const FRESHNESS_CONFIG: Record<
-  FreshnessLevel,
-  { dot: string; label: string; bar: string; border: string; badge: string }
-> = {
-  fresh: {
-    dot: "bg-green-500",
-    label: "Fresh",
-    bar: "bg-green-400",
-    border: "border-l-green-400",
-    badge: "bg-green-50 text-green-700",
-  },
-  soon: {
-    dot: "bg-yellow-400",
-    label: "Eat Soon",
-    bar: "bg-yellow-400",
-    border: "border-l-yellow-400",
-    badge: "bg-yellow-50 text-yellow-700",
-  },
-  toss: {
-    dot: "bg-red-500",
-    label: "Toss It",
-    bar: "bg-red-400",
-    border: "border-l-red-400",
-    badge: "bg-red-50 text-red-700",
-  },
-};
-
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days}d ago`;
-}
-
-function formatRemaining(days: number): string {
-  if (days <= 0) return "Expired";
-  const totalHours = days * 24;
-  if (totalHours < 1) return "<1h left";
-  if (totalHours < 24) return `${Math.floor(totalHours)}h left`;
-  const d = Math.floor(days);
-  const h = Math.floor((days - d) * 24);
-  return h === 0 ? `${d}d left` : `${d}d ${h}h left`;
-}
-
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-
-function Avatar({
-  member,
-  size = 32,
-  overlap = false,
-}: {
-  member: MemberProfile;
-  size?: number;
-  overlap?: boolean;
-}) {
-  const initials = (member.display_name ?? "?")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  const ring = overlap ? "ring-2 ring-white" : "";
-
-  if (member.avatar_url) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={member.avatar_url}
-        alt={member.display_name ?? ""}
-        width={size}
-        height={size}
-        className={`rounded-full object-cover ${ring}`}
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <div
-      className={`rounded-full bg-[#FFE8CC] flex items-center justify-center font-bold text-[#D2691E] ${ring}`}
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-    >
-      {initials}
-    </div>
-  );
-}
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
@@ -194,9 +99,7 @@ function CookedCard({
     >
       <div className="px-4 pt-3 pb-2">
         <div className="flex items-start gap-3">
-          {/* Freshness dot */}
           <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${cfg.dot}`} />
-
           <div className="flex-1 min-w-0">
             <p className="font-bold text-[#3D2010] text-base leading-tight truncate">
               {item.dish_name}
@@ -212,8 +115,6 @@ function CookedCard({
               </span>
             </div>
           </div>
-
-          {/* Done button */}
           <button
             type="button"
             onClick={onDone}
@@ -222,14 +123,10 @@ function CookedCard({
             ✓ Done
           </button>
         </div>
-
-        {/* Remaining time */}
         <p className="text-xs text-[#8B5E3C] mt-1.5 pl-5">
           {formatRemaining(daysLeft)}
         </p>
       </div>
-
-      {/* Freshness progress bar */}
       <div className="h-1 bg-[#F5E6D3]">
         <div
           className={`h-full ${cfg.bar} transition-all duration-500`}
@@ -271,14 +168,14 @@ function CookedSection({
             >
               <div className="px-4 py-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#F5E6D3] mt-1 flex-shrink-0" />
+                  <Skeleton className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-[#F5E6D3] rounded-full w-36" />
-                    <div className="h-3 bg-[#F5E6D3] rounded-full w-20" />
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-20" />
                   </div>
-                  <div className="w-14 h-7 bg-[#F5E6D3] rounded-xl flex-shrink-0" />
+                  <Skeleton className="w-14 h-7 rounded-xl flex-shrink-0" />
                 </div>
-                <div className="h-2.5 bg-[#F5E6D3] rounded-full w-28 mt-2 ml-5" />
+                <Skeleton className="h-2.5 w-28 mt-2 ml-5" />
               </div>
               <div className="h-1 bg-[#F5E6D3]" />
             </div>
@@ -393,7 +290,6 @@ function RawIngredientsSection({
   items: FridgeItem[];
   loading: boolean;
 }) {
-  // Group by category — preserve insertion order, unknown → "Other"
   const grouped = new Map<string, FridgeItem[]>();
   for (const item of items) {
     const cat = item.category || "Other";
@@ -416,13 +312,10 @@ function RawIngredientsSection({
         <div className="space-y-4">
           {[0, 1].map((i) => (
             <div key={i}>
-              <div className="h-3 w-24 bg-[#F5E6D3] rounded animate-pulse mb-2" />
+              <Skeleton className="h-3 w-24 mb-2" />
               <div className="flex gap-2 flex-wrap">
                 {[0, 1, 2].map((j) => (
-                  <div
-                    key={j}
-                    className="h-7 w-20 bg-[#F5E6D3] rounded-full animate-pulse"
-                  />
+                  <Skeleton key={j} className="h-7 w-20" />
                 ))}
               </div>
             </div>
@@ -455,47 +348,6 @@ function RawIngredientsSection({
         </div>
       )}
     </section>
-  );
-}
-
-// ─── Bottom nav ───────────────────────────────────────────────────────────────
-
-function BottomNav({ active }: { active: "fridge" | "cook" | "grocery" }) {
-  const tabs = [
-    { id: "fridge",  label: "Fridge",  icon: "🧊", href: "/"          },
-    { id: "cook",    label: "Cook",    icon: "🍳", href: "/i-cooked"  },
-    { id: "grocery", label: "Grocery", icon: "🛒", href: "/grocery"   },
-  ] as const;
-
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8C9A0] pb-safe z-20">
-      <div className="flex max-w-lg mx-auto">
-        {tabs.map(({ id, label, icon, href }) => {
-          const isActive = id === active;
-          return (
-            <Link
-              key={id}
-              href={href}
-              className={`flex-1 flex flex-col items-center py-2 gap-0.5 transition-colors ${
-                isActive ? "text-[#D2691E]" : "text-[#8B5E3C] hover:text-[#D2691E]"
-              }`}
-            >
-              <span className="text-xl">{icon}</span>
-              <span
-                className={`text-[10px] font-semibold ${
-                  isActive ? "text-[#D2691E]" : "text-[#8B5E3C]"
-                }`}
-              >
-                {label}
-              </span>
-              {isActive && (
-                <div className="absolute bottom-0 w-8 h-0.5 bg-[#D2691E] rounded-t-full" />
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
   );
 }
 
@@ -539,7 +391,6 @@ export default function Home() {
       const msg = sessionStorage.getItem("rasoi_added_toast");
       if (msg) {
         sessionStorage.removeItem("rasoi_added_toast");
-        // Small delay so the page transition settles first
         setTimeout(() => setToast(msg), 300);
       }
     } catch {
@@ -547,10 +398,36 @@ export default function Home() {
     }
   }, []);
 
+  // ── Undo toast for "Done" action ──
+  const [undoState, setUndoState] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDone = useCallback(
+    (id: string) => {
+      const item = cookedItems.find((i) => i.id === id);
+      if (!item) return;
+      // Optimistic: markDone removes from list immediately
+      markDone(id);
+      setUndoState({ id, name: item.dish_name });
+    },
+    [cookedItems, markDone]
+  );
+
+  const handleUndoDone = useCallback(async () => {
+    if (!undoState) return;
+    await restoreCookedItem(undoState.id);
+    setUndoState(null);
+    refetchCooked();
+  }, [undoState, refetchCooked]);
+
+  const handleUndoExpire = useCallback(() => {
+    setUndoState(null);
+    // Action already committed by markDone
+  }, []);
+
   // ── Pull-to-refresh ──
   const mainRef = useRef<HTMLElement>(null);
   const touchStartY = useRef(0);
-  const [pullY, setPullY] = useState(0);       // 0-64, capped
+  const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -559,7 +436,7 @@ export default function Home() {
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
     const scrollTop = mainRef.current?.scrollTop ?? 1;
-    if (scrollTop > 0) return;                 // only act when at the top
+    if (scrollTop > 0) return;
     const delta = e.touches[0].clientY - touchStartY.current;
     if (delta > 0) setPullY(Math.min(delta * 0.45, 64));
   }, []);
@@ -618,7 +495,15 @@ export default function Home() {
         variant="success"
       />
 
-      {/* Scrollable body — padded for sticky buttons (h-16 nav + ~68px buttons) */}
+      {/* Undo toast for "Done" action */}
+      <UndoToast
+        message={undoState ? `${undoState.name} marked done` : ""}
+        visible={!!undoState}
+        onUndo={handleUndoDone}
+        onExpire={handleUndoExpire}
+      />
+
+      {/* Scrollable body */}
       <main
         ref={mainRef}
         className="flex-1 overflow-y-auto pb-40"
@@ -648,11 +533,10 @@ export default function Home() {
         <CookedSection
           items={cookedItems}
           loading={cookedLoading}
-          onDone={markDone}
+          onDone={handleDone}
         />
         <UseSoonAlert items={fridgeItems} />
         <RawIngredientsSection items={fridgeItems} loading={fridgeLoading} />
-        {/* Bottom breathing room */}
         <div className="h-6" />
       </main>
 

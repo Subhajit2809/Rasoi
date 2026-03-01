@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import "@/lib/env"; // Fail fast on missing env vars
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||

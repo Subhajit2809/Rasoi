@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
+import { nameMatches } from "@/lib/matching";
+import { getFreshnessDays } from "@/lib/freshness";
+import { insertCookedItem } from "@/lib/services/cooked";
+import { insertMealLog, fetchAllRecipes, fetchPantryStaples } from "@/lib/services/recipes";
+import { deleteFridgeItems } from "@/lib/services/fridge";
 import type { Recipe, FridgeItem, PantryStaple } from "@/types";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -14,30 +18,13 @@ interface MatchedRecipe {
   recipe: Recipe;
   matchCount: number;
   totalIngredients: number;
-  score: number;            // 0–1
-  deductIds: string[];      // fridge_item ids to remove after logging
+  score: number;
+  deductIds: string[];
 }
 
 type DietFilter = "all" | "veg" | "eggetarian" | "nonveg";
 
-// ─── Matching helpers ─────────────────────────────────────────────────────────
-
-/**
- * True if ingredient name plausibly refers to the same thing as a fridge/pantry
- * item name. Handles "onion" ↔ "Pyaz (Onion)", "ginger-garlic paste" ↔ "Adrak
- * (Ginger)", "tomatoes" ↔ "Tamatar (Tomato)", etc.
- */
-function nameMatches(ingredientRaw: string, itemName: string): boolean {
-  const a = ingredientRaw.toLowerCase();
-  const b = itemName.toLowerCase();
-
-  // Direct containment
-  if (b.includes(a) || a.includes(b)) return true;
-
-  // Word-level: any ≥4-char word from ingredient appears in item name
-  const words = a.split(/[\s\-,()]+/).filter((w) => w.length >= 4);
-  return words.some((w) => b.includes(w));
-}
+// ─── Matching ────────────────────────────────────────────────────────────────
 
 const PERISHABLE_CATS = new Set(["Vegetables", "Dairy & Protein"]);
 
@@ -55,7 +42,6 @@ function computeMatches(
       const usedFridgeIds = new Set<string>();
 
       for (const ing of recipe.ingredients) {
-        // 1. Check fridge items first (any category)
         const fridgeMatch = fridgeItems.find(
           (fi) => !usedFridgeIds.has(fi.id) && nameMatches(ing.name, fi.item_name)
         );
@@ -63,14 +49,12 @@ function computeMatches(
         if (fridgeMatch) {
           matchCount++;
           usedFridgeIds.add(fridgeMatch.id);
-          // Queue for deduction only if perishable
           if (PERISHABLE_CATS.has(fridgeMatch.category)) {
             deductIds.push(fridgeMatch.id);
           }
           continue;
         }
 
-        // 2. Fall back to pantry staples (not deducted — they're always there)
         if (pantryNames.some((p) => nameMatches(ing.name, p))) {
           matchCount++;
         }
@@ -86,14 +70,6 @@ function computeMatches(
       };
     })
     .sort((a, b) => b.score - a.score);
-}
-
-// ─── Freshness days ───────────────────────────────────────────────────────────
-
-function getFreshnessDays(recipe: Recipe): number {
-  const n = recipe.name.toLowerCase();
-  if (n.includes("fish") || n.includes("ilish") || n.includes("macher")) return 1;
-  return 2; // dal, sabzi, paneer, chicken, rice dishes — all 2 days
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
@@ -169,8 +145,6 @@ function SuggestionCard({
           <p className="text-xs text-[#8B5E3C] mt-0.5">
             {recipe.region} · {DIET_EMOJI[recipe.diet_type]} · {recipe.cook_time_mins} min
           </p>
-
-          {/* Match bar */}
           <div className="mt-2.5">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] text-[#8B5E3C]">
@@ -186,7 +160,6 @@ function SuggestionCard({
             </div>
           </div>
         </div>
-
         <CookButton busy={busy} onClick={onLog} />
       </div>
     </div>
@@ -231,12 +204,10 @@ export default function ICookedPage() {
   const { household } = useHousehold();
   const { items: fridgeItems } = useFridgeItems(household?.id);
 
-  // Remote data (one-time fetch — recipes don't change, pantry staples rarely do)
   const [recipes, setRecipes]           = useState<Recipe[]>([]);
   const [pantryStaples, setPantryStaples] = useState<PantryStaple[]>([]);
   const [dataLoading, setDataLoading]   = useState(true);
 
-  // UI state
   const [search, setSearch]         = useState("");
   const [dietFilter, setDietFilter] = useState<DietFilter>("all");
   const [loggingId, setLoggingId]   = useState<string | null>(null);
@@ -249,14 +220,13 @@ export default function ICookedPage() {
     let cancelled = false;
 
     async function load() {
-      const supabase = createClient();
-      const [recipesRes, staplesRes] = await Promise.all([
-        supabase.from("recipes").select("*").order("name"),
-        supabase.from("pantry_staples").select("*").eq("household_id", household!.id),
+      const [r, s] = await Promise.all([
+        fetchAllRecipes(),
+        fetchPantryStaples(household!.id),
       ]);
       if (cancelled) return;
-      setRecipes((recipesRes.data ?? []) as Recipe[]);
-      setPantryStaples((staplesRes.data ?? []) as PantryStaple[]);
+      setRecipes(r);
+      setPantryStaples(s);
       setDataLoading(false);
     }
 
@@ -264,19 +234,16 @@ export default function ICookedPage() {
     return () => { cancelled = true; };
   }, [household]);
 
-  // Compute match scores (derived, recalculated when fridge changes)
   const matchedRecipes = useMemo(
     () => computeMatches(recipes, fridgeItems, pantryStaples),
     [recipes, fridgeItems, pantryStaples]
   );
 
-  // Suggestions: ≥25% match, cap at 5
   const suggestions = useMemo(
     () => matchedRecipes.filter((m) => m.score >= 0.25).slice(0, 5),
     [matchedRecipes]
   );
 
-  // All-recipes list: apply search + diet filter
   const filteredRecipes = useMemo(() => {
     const q = search.toLowerCase();
     return matchedRecipes.filter((m) => {
@@ -286,47 +253,37 @@ export default function ICookedPage() {
     });
   }, [matchedRecipes, search, dietFilter]);
 
-  // Close sheet
   const dismiss = useCallback(() => {
     setClosing(true);
     setTimeout(() => router.back(), 260);
   }, [router]);
 
-  // Log a dish
   const handleLog = useCallback(
     async (m: MatchedRecipe) => {
       if (!household || !user || loggingId) return;
       setLoggingId(m.recipe.id);
 
-      const supabase = createClient();
-      const freshnessDays = getFreshnessDays(m.recipe);
+      const freshnessDays = getFreshnessDays(m.recipe.name);
       const today = new Date().toISOString().split("T")[0];
 
-      // Run all inserts in parallel; deductions are fire-and-forget
       await Promise.all([
-        supabase.from("cooked_items").insert({
+        insertCookedItem({
           household_id:   household.id,
           dish_name:      m.recipe.name,
           freshness_days: freshnessDays,
           status:         "fresh",
         }),
-        supabase.from("meal_log").insert({
+        insertMealLog({
           household_id: household.id,
           dish_name:    m.recipe.name,
           date:         today,
         }),
-        // Deduct perishable ingredients from fridge
-        m.deductIds.length > 0
-          ? supabase.from("fridge_items").delete().in("id", m.deductIds)
-          : Promise.resolve(),
+        deleteFridgeItems(m.deductIds),
       ]);
 
       setLoggingId(null);
-
-      // Show success toast
       setToast({ name: m.recipe.name, days: freshnessDays });
 
-      // Close after toast is visible
       setTimeout(() => {
         setClosing(true);
         setTimeout(() => router.replace("/"), 260);
@@ -352,7 +309,6 @@ export default function ICookedPage() {
         if (e.target === e.currentTarget) dismiss();
       }}
     >
-      {/* ── Success toast (absolute, above the sheet) ── */}
       {toast && (
         <div className="absolute top-16 left-4 right-4 z-50 bg-green-700 text-white px-4 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in-right">
           <span className="text-2xl">✓</span>
@@ -367,7 +323,6 @@ export default function ICookedPage() {
         </div>
       )}
 
-      {/* ── Bottom sheet ── */}
       <div
         className={`w-full bg-[#FFF8F0] rounded-t-3xl flex flex-col overflow-hidden ${
           closing ? "animate-slide-down" : "animate-slide-up"
@@ -375,12 +330,10 @@ export default function ICookedPage() {
         style={{ maxHeight: "92svh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0 bg-white rounded-t-3xl">
           <div className="w-10 h-1 rounded-full bg-[#E8C9A0]" />
         </div>
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 bg-white flex-shrink-0 border-b border-[#F5E6D3]">
           <div>
             <h2 className="text-lg font-bold text-[#3D2010]">🍳 I Cooked</h2>
@@ -395,10 +348,7 @@ export default function ICookedPage() {
           </button>
         </div>
 
-        {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto">
-
-          {/* ══ Suggestions section ══ */}
           <section className="px-4 pt-5 pb-4">
             <div className="flex items-baseline justify-between mb-3">
               <h3 className="font-bold text-[#3D2010] text-sm flex items-center gap-1.5">
@@ -437,9 +387,7 @@ export default function ICookedPage() {
             )}
           </section>
 
-          {/* ══ All Recipes section ══ */}
           <section className="px-4 pb-8">
-            {/* Sticky search + filter bar */}
             <div className="sticky top-0 z-10 bg-[#FFF8F0] pb-2 pt-1">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-bold text-[#3D2010] text-sm flex-shrink-0">
@@ -450,7 +398,6 @@ export default function ICookedPage() {
                 </span>
               </div>
 
-              {/* Search input */}
               <div className="relative mb-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B5E3C] text-sm">
                   🔍
@@ -464,7 +411,6 @@ export default function ICookedPage() {
                 />
               </div>
 
-              {/* Diet filter chips */}
               <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
                 {DIET_TABS.map(({ id, label, emoji }) => (
                   <button
@@ -484,7 +430,6 @@ export default function ICookedPage() {
               </div>
             </div>
 
-            {/* Recipe rows */}
             {dataLoading ? (
               <div className="space-y-3 mt-2">
                 {[0, 1, 2, 3].map((i) => (
