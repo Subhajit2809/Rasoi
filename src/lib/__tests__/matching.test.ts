@@ -70,7 +70,7 @@ describe("isExpiringSoon", () => {
       estimated_expiry: expiryDaysFromNow !== null
         ? new Date(Date.now() + expiryDaysFromNow * 86_400_000).toISOString()
         : null,
-      added_by: null,
+      added_by: "",
     };
   }
 
