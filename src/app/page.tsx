@@ -13,7 +13,8 @@ import { UndoToast } from "@/components/UndoToast";
 import { Avatar } from "@/components/Avatar";
 import { BottomNav } from "@/components/BottomNav";
 import { Skeleton } from "@/components/Skeleton";
-import { restoreCookedItem } from "@/lib/services/cooked";
+import { restoreCookedItem, insertCookedItem } from "@/lib/services/cooked";
+import { insertFridgeItems } from "@/lib/services/fridge";
 import {
   getDaysRemaining,
   freshnessLevel,
@@ -85,9 +86,11 @@ function Header({
 function CookedCard({
   item,
   onDone,
+  onRemove,
 }: {
   item: CookedItem;
   onDone: () => void;
+  onRemove: () => void;
 }) {
   const daysLeft = getDaysRemaining(item);
   const level = freshnessLevel(daysLeft);
@@ -116,13 +119,23 @@ function CookedCard({
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onDone}
-            className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#FFF0E0] dark:bg-dark-card border border-[#E8C9A0] dark:border-dark-border text-xs font-semibold text-[#D2691E] hover:bg-[#D2691E] hover:text-white transition-colors active:scale-95"
-          >
-            ✓ Done
-          </button>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onDone}
+              className="px-3 py-1.5 rounded-xl bg-[#FFF0E0] dark:bg-dark-card border border-[#E8C9A0] dark:border-dark-border text-xs font-semibold text-[#D2691E] hover:bg-[#D2691E] hover:text-white transition-colors active:scale-95"
+            >
+              ✓ Done
+            </button>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-[#8B5E3C] dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-colors active:scale-95"
+              title="Remove"
+            >
+              🗑
+            </button>
+          </div>
         </div>
         <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-1.5 pl-5">
           {formatRemaining(daysLeft)}
@@ -144,10 +157,12 @@ function CookedSection({
   items,
   loading,
   onDone,
+  onRemove,
 }: {
   items: CookedItem[];
   loading: boolean;
   onDone: (id: string) => void;
+  onRemove: (id: string) => void;
 }) {
   return (
     <section className="px-4 pt-5">
@@ -198,6 +213,7 @@ function CookedSection({
               key={item.id}
               item={item}
               onDone={() => onDone(item.id)}
+              onRemove={() => onRemove(item.id)}
             />
           ))}
         </div>
@@ -260,7 +276,7 @@ function UseSoonAlert({ items }: { items: FridgeItem[] }) {
 
 // ─── Raw ingredients section ──────────────────────────────────────────────────
 
-function FridgeChip({ item }: { item: FridgeItem }) {
+function FridgeChip({ item, onRemove }: { item: FridgeItem; onRemove: () => void }) {
   const qty =
     item.qty === 1 && item.unit === "piece"
       ? ""
@@ -280,6 +296,14 @@ function FridgeChip({ item }: { item: FridgeItem }) {
     >
       <span className="truncate max-w-[90px]">{item.item_name}</span>
       {qty && <span className="text-[10px] text-[#8B5E3C] dark:text-gray-400 whitespace-nowrap">{qty}</span>}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-0.5 -mr-1 w-4 h-4 flex items-center justify-center rounded-full text-[10px] leading-none opacity-50 hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-500 transition-all"
+        title="Remove"
+      >
+        ×
+      </button>
     </div>
   );
 }
@@ -287,9 +311,11 @@ function FridgeChip({ item }: { item: FridgeItem }) {
 function RawIngredientsSection({
   items,
   loading,
+  onRemove,
 }: {
   items: FridgeItem[];
   loading: boolean;
+  onRemove: (id: string) => void;
 }) {
   const grouped = new Map<string, FridgeItem[]>();
   for (const item of items) {
@@ -341,7 +367,7 @@ function RawIngredientsSection({
               </p>
               <div className="flex flex-wrap gap-2">
                 {catItems.map((item) => (
-                  <FridgeChip key={item.id} item={item} />
+                  <FridgeChip key={item.id} item={item} onRemove={() => onRemove(item.id)} />
                 ))}
               </div>
             </div>
@@ -382,8 +408,8 @@ export default function Home() {
   const { user, loading: userLoading } = useUser();
   const { household, loading: hhLoading } = useHousehold();
   const { members, loading: membLoading } = useHouseholdMembers(household?.id);
-  const { items: cookedItems, loading: cookedLoading, markDone, refetch: refetchCooked } = useCookedItems(household?.id);
-  const { items: fridgeItems, loading: fridgeLoading, refetch: refetchFridge } = useFridgeItems(household?.id);
+  const { items: cookedItems, loading: cookedLoading, markDone, removeItem: removeCookedItem, refetch: refetchCooked } = useCookedItems(household?.id);
+  const { items: fridgeItems, loading: fridgeLoading, removeItem: removeFridgeItem, refetch: refetchFridge } = useFridgeItems(household?.id);
 
   useNotifications(cookedItems, fridgeItems);
 
@@ -401,30 +427,77 @@ export default function Home() {
     }
   }, []);
 
-  // ── Undo toast for "Done" action ──
-  const [undoState, setUndoState] = useState<{ id: string; name: string } | null>(null);
+  // ── Undo toast for "Done" and "Remove" actions ──
+  const [undoState, setUndoState] = useState<{
+    name: string;
+    type: "done" | "remove-cooked" | "remove-fridge";
+    cookedItem?: CookedItem;
+    fridgeItem?: FridgeItem;
+  } | null>(null);
 
   const handleDone = useCallback(
     (id: string) => {
       const item = cookedItems.find((i) => i.id === id);
       if (!item) return;
-      // Optimistic: markDone removes from list immediately
       markDone(id);
-      setUndoState({ id, name: item.dish_name });
+      setUndoState({ name: item.dish_name, type: "done", cookedItem: item });
     },
     [cookedItems, markDone]
   );
 
-  const handleUndoDone = useCallback(async () => {
+  const handleRemoveCooked = useCallback(
+    (id: string) => {
+      const item = cookedItems.find((i) => i.id === id);
+      if (!item) return;
+      removeCookedItem(id);
+      setUndoState({ name: item.dish_name, type: "remove-cooked", cookedItem: item });
+    },
+    [cookedItems, removeCookedItem]
+  );
+
+  const handleRemoveFridge = useCallback(
+    (id: string) => {
+      const item = fridgeItems.find((i) => i.id === id);
+      if (!item) return;
+      removeFridgeItem(id);
+      setUndoState({ name: item.item_name, type: "remove-fridge", fridgeItem: item });
+    },
+    [fridgeItems, removeFridgeItem]
+  );
+
+  const handleUndo = useCallback(async () => {
     if (!undoState) return;
-    await restoreCookedItem(undoState.id);
+    if (undoState.type === "done" && undoState.cookedItem) {
+      await restoreCookedItem(undoState.cookedItem.id);
+      refetchCooked();
+    } else if (undoState.type === "remove-cooked" && undoState.cookedItem) {
+      const ci = undoState.cookedItem;
+      await insertCookedItem({
+        household_id: ci.household_id,
+        dish_name: ci.dish_name,
+        freshness_days: ci.freshness_days,
+        status: ci.status as "fresh" | "stale" | "finished",
+        cooked_at: ci.cooked_at,
+      });
+      refetchCooked();
+    } else if (undoState.type === "remove-fridge" && undoState.fridgeItem) {
+      const fi = undoState.fridgeItem;
+      await insertFridgeItems([{
+        household_id: fi.household_id,
+        item_name: fi.item_name,
+        category: fi.category,
+        qty: fi.qty,
+        unit: fi.unit,
+        added_by: fi.added_by,
+        estimated_expiry: fi.estimated_expiry,
+      }]);
+      refetchFridge();
+    }
     setUndoState(null);
-    refetchCooked();
-  }, [undoState, refetchCooked]);
+  }, [undoState, refetchCooked, refetchFridge]);
 
   const handleUndoExpire = useCallback(() => {
     setUndoState(null);
-    // Action already committed by markDone
   }, []);
 
   // ── Pull-to-refresh ──
@@ -498,11 +571,17 @@ export default function Home() {
         variant="success"
       />
 
-      {/* Undo toast for "Done" action */}
+      {/* Undo toast for Done/Remove actions */}
       <UndoToast
-        message={undoState ? `${undoState.name} marked done` : ""}
+        message={
+          undoState
+            ? undoState.type === "done"
+              ? `${undoState.name} marked done`
+              : `${undoState.name} removed`
+            : ""
+        }
         visible={!!undoState}
-        onUndo={handleUndoDone}
+        onUndo={handleUndo}
         onExpire={handleUndoExpire}
       />
 
@@ -537,9 +616,10 @@ export default function Home() {
           items={cookedItems}
           loading={cookedLoading}
           onDone={handleDone}
+          onRemove={handleRemoveCooked}
         />
         <UseSoonAlert items={fridgeItems} />
-        <RawIngredientsSection items={fridgeItems} loading={fridgeLoading} />
+        <RawIngredientsSection items={fridgeItems} loading={fridgeLoading} onRemove={handleRemoveFridge} />
         <div className="h-6" />
       </main>
 

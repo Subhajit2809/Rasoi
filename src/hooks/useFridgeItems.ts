@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { deleteFridgeItems } from "@/lib/services/fridge";
 import type { FridgeItem } from "@/types";
 
 interface UseFridgeItemsResult {
   items: FridgeItem[];
   loading: boolean;
+  removeItem: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -62,5 +64,13 @@ export function useFridgeItems(
     };
   }, [householdId, fetchItems]);
 
-  return { items, loading, refetch: fetchItems };
+  const removeItem = useCallback(
+    async (id: string) => {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      await deleteFridgeItems([id]);
+    },
+    []
+  );
+
+  return { items, loading, removeItem, refetch: fetchItems };
 }

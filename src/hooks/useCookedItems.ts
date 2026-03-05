@@ -8,6 +8,7 @@ interface UseCookedItemsResult {
   items: CookedItem[];
   loading: boolean;
   markDone: (id: string) => Promise<void>;
+  removeItem: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -90,5 +91,15 @@ export function useCookedItems(
     [fetchItems]
   );
 
-  return { items, loading, markDone, refetch: fetchItems };
+  const removeItem = useCallback(
+    async (id: string) => {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      const supabase = createClient();
+      const { error } = await supabase.from("cooked_items").delete().eq("id", id);
+      if (error) fetchItems();
+    },
+    [fetchItems]
+  );
+
+  return { items, loading, markDone, removeItem, refetch: fetchItems };
 }

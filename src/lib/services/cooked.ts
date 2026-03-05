@@ -29,6 +29,12 @@ export async function restoreCookedItem(id: string) {
     .eq("id", id);
 }
 
+/** Permanently remove a cooked item (not just mark as finished). */
+export async function deleteCookedItem(id: string) {
+  const supabase = createClient();
+  return supabase.from("cooked_items").delete().eq("id", id);
+}
+
 export async function fetchActiveCookedItems(householdId: string): Promise<CookedItem[]> {
   const supabase = createClient();
   const { data } = await supabase
