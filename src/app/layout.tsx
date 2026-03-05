@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PostHogProvider } from "@/components/PostHogProvider";
 import "@/lib/env"; // Fail fast on missing env vars
 
 const APP_URL =
@@ -88,8 +89,10 @@ export default function RootLayout({
       </head>
       <body className="bg-[#FFF8F0] dark:bg-dark-bg text-gray-900 dark:text-gray-100 antialiased transition-colors">
         <ThemeProvider>
-          {children}
-          <InstallPrompt />
+          <PostHogProvider>
+            {children}
+            <InstallPrompt />
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>
