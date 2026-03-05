@@ -38,12 +38,12 @@ function Header({
   const overflow = members.length - 3;
 
   return (
-    <header className="bg-white border-b border-[#E8C9A0] px-4 py-3 flex items-center gap-3">
+    <header className="bg-white dark:bg-dark-surface border-b border-[#E8C9A0] dark:border-dark-border px-4 py-3 flex items-center gap-3">
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-[#3D2010] text-sm truncate leading-tight">
+        <p className="font-bold text-[#3D2010] dark:text-gray-100 text-sm truncate leading-tight">
           {householdName}
         </p>
-        <p className="text-xs text-[#8B5E3C]">Mera Fridge</p>
+        <p className="text-xs text-[#8B5E3C] dark:text-gray-400">Mera Fridge</p>
       </div>
 
       {/* Member avatars */}
@@ -52,7 +52,7 @@ function Header({
           ? [0, 1].map((i) => (
               <div
                 key={i}
-                className="w-8 h-8 rounded-full bg-[#F5E6D3] animate-pulse ring-2 ring-white"
+                className="w-8 h-8 rounded-full bg-[#F5E6D3] dark:bg-dark-border animate-pulse ring-2 ring-white dark:ring-dark-surface"
                 style={{ zIndex: 2 - i }}
               />
             ))
@@ -62,7 +62,7 @@ function Header({
               </div>
             ))}
         {overflow > 0 && (
-          <div className="w-8 h-8 rounded-full bg-[#E8C9A0] flex items-center justify-center text-xs font-bold text-[#5C3A1E] ring-2 ring-white">
+          <div className="w-8 h-8 rounded-full bg-[#E8C9A0] dark:bg-dark-border flex items-center justify-center text-xs font-bold text-[#5C3A1E] dark:text-gray-200 ring-2 ring-white dark:ring-dark-surface">
             +{overflow}
           </div>
         )}
@@ -70,7 +70,7 @@ function Header({
 
       <Link
         href="/settings"
-        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#8B5E3C] hover:bg-[#FFF0E0] transition-colors text-base"
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#8B5E3C] dark:text-gray-400 hover:bg-[#FFF0E0] dark:hover:bg-dark-card transition-colors text-base"
         aria-label="Settings"
       >
         ⚙️
@@ -95,13 +95,13 @@ function CookedCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E8C9A0] border-l-4 ${cfg.border} overflow-hidden`}
+      className={`bg-white dark:bg-dark-surface rounded-2xl border border-[#E8C9A0] dark:border-dark-border border-l-4 ${cfg.border} overflow-hidden`}
     >
       <div className="px-4 pt-3 pb-2">
         <div className="flex items-start gap-3">
           <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${cfg.dot}`} />
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-[#3D2010] text-base leading-tight truncate">
+            <p className="font-bold text-[#3D2010] dark:text-gray-100 text-base leading-tight truncate">
               {item.dish_name}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
@@ -110,7 +110,7 @@ function CookedCard({
               >
                 {cfg.label}
               </span>
-              <span className="text-xs text-[#8B5E3C]">
+              <span className="text-xs text-[#8B5E3C] dark:text-gray-400">
                 cooked {relativeTime(item.cooked_at)}
               </span>
             </div>
@@ -118,16 +118,16 @@ function CookedCard({
           <button
             type="button"
             onClick={onDone}
-            className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#FFF0E0] border border-[#E8C9A0] text-xs font-semibold text-[#D2691E] hover:bg-[#D2691E] hover:text-white transition-colors active:scale-95"
+            className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#FFF0E0] dark:bg-dark-card border border-[#E8C9A0] dark:border-dark-border text-xs font-semibold text-[#D2691E] hover:bg-[#D2691E] hover:text-white transition-colors active:scale-95"
           >
             ✓ Done
           </button>
         </div>
-        <p className="text-xs text-[#8B5E3C] mt-1.5 pl-5">
+        <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-1.5 pl-5">
           {formatRemaining(daysLeft)}
         </p>
       </div>
-      <div className="h-1 bg-[#F5E6D3]">
+      <div className="h-1 bg-[#F5E6D3] dark:bg-dark-border">
         <div
           className={`h-full ${cfg.bar} transition-all duration-500`}
           style={{ width: `${pct}%` }}
@@ -151,9 +151,9 @@ function CookedSection({
   return (
     <section className="px-4 pt-5">
       <div className="flex items-center gap-2 mb-3">
-        <h2 className="font-bold text-[#3D2010] text-base">🍲 Cooked Food</h2>
+        <h2 className="font-bold text-[#3D2010] dark:text-gray-100 text-base">🍲 Cooked Food</h2>
         {items.length > 0 && (
-          <span className="text-xs font-semibold bg-[#FFE8CC] text-[#D2691E] px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold bg-[#FFE8CC] dark:bg-[#4A3020] text-[#D2691E] px-2 py-0.5 rounded-full">
             {items.length}
           </span>
         )}
@@ -164,7 +164,7 @@ function CookedSection({
           {[0, 1].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border border-[#E8C9A0] border-l-4 border-l-[#E8C9A0] overflow-hidden animate-pulse"
+              className="rounded-2xl border border-[#E8C9A0] dark:border-dark-border border-l-4 border-l-[#E8C9A0] dark:border-l-dark-border overflow-hidden animate-pulse"
             >
               <div className="px-4 py-3">
                 <div className="flex items-start gap-3">
@@ -177,15 +177,15 @@ function CookedSection({
                 </div>
                 <Skeleton className="h-2.5 w-28 mt-2 ml-5" />
               </div>
-              <div className="h-1 bg-[#F5E6D3]" />
+              <div className="h-1 bg-[#F5E6D3] dark:bg-dark-border" />
             </div>
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#E8C9A0] p-6 text-center">
+        <div className="bg-white dark:bg-dark-surface rounded-2xl border border-dashed border-[#E8C9A0] dark:border-dark-border p-6 text-center">
           <p className="text-3xl mb-2">🍽️</p>
-          <p className="text-sm font-semibold text-[#5C3A1E]">Nothing on the stove yet</p>
-          <p className="text-xs text-[#8B5E3C] mt-1 leading-relaxed">
+          <p className="text-sm font-semibold text-[#5C3A1E] dark:text-gray-200">Nothing on the stove yet</p>
+          <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-1 leading-relaxed">
             What did you cook today?{" "}
             <span className="font-semibold text-[#D2691E]">Tap I Cooked ↓</span>
           </p>
@@ -230,10 +230,10 @@ function UseSoonAlert({ items }: { items: FridgeItem[] }) {
 
   return (
     <section className="px-4 pt-4">
-      <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
-        <p className="text-sm font-bold text-yellow-800 mb-2.5 flex items-center gap-1.5">
+      <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800/40 rounded-2xl p-4">
+        <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-2.5 flex items-center gap-1.5">
           ⏰ Use Before It&apos;s Gone
-          <span className="text-xs font-semibold bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs font-semibold bg-yellow-200 dark:bg-yellow-800/40 text-yellow-800 dark:text-yellow-300 px-1.5 py-0.5 rounded-full">
             {expiring.length}
           </span>
         </p>
@@ -241,12 +241,12 @@ function UseSoonAlert({ items }: { items: FridgeItem[] }) {
           {expiring.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-1.5 bg-white border border-yellow-200 rounded-full px-3 py-1"
+              className="flex items-center gap-1.5 bg-white dark:bg-dark-surface border border-yellow-200 dark:border-yellow-800/40 rounded-full px-3 py-1"
             >
-              <span className="text-xs font-semibold text-[#3D2010] truncate max-w-[100px]">
+              <span className="text-xs font-semibold text-[#3D2010] dark:text-gray-100 truncate max-w-[100px]">
                 {item.item_name}
               </span>
-              <span className="text-xs text-yellow-700 font-bold whitespace-nowrap">
+              <span className="text-xs text-yellow-700 dark:text-yellow-400 font-bold whitespace-nowrap">
                 {hoursLeft(item.estimated_expiry!)}
               </span>
             </div>
@@ -273,12 +273,12 @@ function FridgeChip({ item }: { item: FridgeItem }) {
     <div
       className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium ${
         isUseSoon
-          ? "bg-yellow-50 border-yellow-200 text-yellow-800"
-          : "bg-white border-[#E8C9A0] text-[#3D2010]"
+          ? "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800/40 text-yellow-800 dark:text-yellow-300"
+          : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border text-[#3D2010] dark:text-gray-100"
       }`}
     >
       <span className="truncate max-w-[90px]">{item.item_name}</span>
-      {qty && <span className="text-[10px] text-[#8B5E3C] whitespace-nowrap">{qty}</span>}
+      {qty && <span className="text-[10px] text-[#8B5E3C] dark:text-gray-400 whitespace-nowrap">{qty}</span>}
     </div>
   );
 }
@@ -299,10 +299,10 @@ function RawIngredientsSection({
 
   return (
     <section className="px-4 pt-5 pb-2">
-      <h2 className="font-bold text-[#3D2010] text-base mb-3 flex items-center gap-2">
+      <h2 className="font-bold text-[#3D2010] dark:text-gray-100 text-base mb-3 flex items-center gap-2">
         🧊 In the Fridge
         {items.length > 0 && (
-          <span className="text-xs font-semibold bg-[#E8F5FF] text-blue-600 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold bg-[#E8F5FF] dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
             {items.length} items
           </span>
         )}
@@ -322,10 +322,10 @@ function RawIngredientsSection({
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-[#E8C9A0] p-8 text-center">
+        <div className="bg-white dark:bg-dark-surface rounded-2xl border border-dashed border-[#E8C9A0] dark:border-dark-border p-8 text-center">
           <p className="text-4xl mb-3">🛒</p>
-          <p className="text-sm font-semibold text-[#5C3A1E]">Your fridge is empty!</p>
-          <p className="text-xs text-[#8B5E3C] mt-1 leading-relaxed">
+          <p className="text-sm font-semibold text-[#5C3A1E] dark:text-gray-200">Your fridge is empty!</p>
+          <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-1 leading-relaxed">
             Tap{" "}
             <span className="font-bold text-[#D2691E]">+ Add Items</span>{" "}
             to get started
@@ -335,7 +335,7 @@ function RawIngredientsSection({
         <div className="space-y-4">
           {Array.from(grouped.entries()).map(([category, catItems]) => (
             <div key={category}>
-              <p className="text-xs font-semibold text-[#8B5E3C] uppercase tracking-wider mb-2">
+              <p className="text-xs font-semibold text-[#8B5E3C] dark:text-gray-400 uppercase tracking-wider mb-2">
                 {category}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -355,11 +355,11 @@ function RawIngredientsSection({
 
 function StickyActions() {
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-10 px-4 pb-2 pt-3 bg-gradient-to-t from-[#FFF8F0] via-[#FFF8F0]/95 to-transparent">
+    <div className="fixed bottom-16 left-0 right-0 z-10 px-4 pb-2 pt-3 bg-gradient-to-t from-[#FFF8F0] via-[#FFF8F0]/95 to-transparent dark:from-dark-bg dark:via-dark-bg/95">
       <div className="flex gap-3 max-w-lg mx-auto">
         <Link
           href="/add-items"
-          className="flex-1 py-3 rounded-2xl border-2 border-[#D2691E] text-[#D2691E] font-bold text-sm text-center hover:bg-[#FFF0E0] active:scale-95 transition-all"
+          className="flex-1 py-3 rounded-2xl border-2 border-[#D2691E] text-[#D2691E] font-bold text-sm text-center hover:bg-[#FFF0E0] dark:hover:bg-dark-card active:scale-95 transition-all"
         >
           + Add Items
         </Link>
@@ -468,7 +468,7 @@ export default function Home() {
 
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#D2691E] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -477,7 +477,7 @@ export default function Home() {
   if (!household) return null; // redirecting
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] flex flex-col">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex flex-col">
       {/* Top accent */}
       <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347] flex-shrink-0" />
 

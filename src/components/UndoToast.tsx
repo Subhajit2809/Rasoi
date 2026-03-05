@@ -31,7 +31,7 @@ export function UndoToast({
   if (!visible) return null;
 
   return (
-    <div className="fixed top-14 left-4 right-4 z-[100] flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-2xl bg-[#3D2010] text-white animate-slide-in-right">
+    <div className="fixed top-14 left-4 right-4 z-[100] flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-2xl bg-[#3D2010] dark:bg-dark-card dark:border dark:border-dark-border text-white animate-slide-in-right">
       <p className="text-sm font-semibold flex-1">{message}</p>
       <button
         onClick={() => {

@@ -9,6 +9,9 @@ import { useHouseholdMembers, type MemberProfile } from "@/hooks/useHouseholdMem
 import { Avatar } from "@/components/Avatar";
 import { Skeleton } from "@/components/Skeleton";
 import { generateInviteCode } from "@/lib/services/household";
+import { useTheme } from "@/components/ThemeProvider";
+
+type ThemeOption = "light" | "dark" | "system";
 
 // ─── Invite code section ──────────────────────────────────────────────────────
 
@@ -69,11 +72,11 @@ function InviteSection({ householdId }: { householdId: string }) {
     : null;
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
-      <h3 className="font-semibold text-[#3D2010] mb-1 flex items-center gap-2">
+    <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
+      <h3 className="font-semibold text-[#3D2010] dark:text-gray-100 mb-1 flex items-center gap-2">
         <span>🔗</span> Invite a Partner
       </h3>
-      <p className="text-xs text-[#8B5E3C] mb-4">
+      <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mb-4">
         Generate a 6-character code. Your partner enters it at{" "}
         <span className="font-mono text-[#D2691E]">/join</span> to share your kitchen.
         Codes expire in 24 hours and can only be used once.
@@ -97,24 +100,24 @@ function InviteSection({ householdId }: { householdId: string }) {
         </button>
       ) : (
         <div className="space-y-3">
-          <div className="bg-[#FFF8F0] border-2 border-[#D2691E] rounded-2xl p-4 text-center">
-            <p className="text-xs text-[#8B5E3C] mb-1 uppercase tracking-widest font-medium">
+          <div className="bg-[#FFF8F0] dark:bg-dark-bg border-2 border-[#D2691E] rounded-2xl p-4 text-center">
+            <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mb-1 uppercase tracking-widest font-medium">
               Invite Code
             </p>
             <p className="text-4xl font-bold tracking-[0.3em] text-[#D2691E] font-mono">
               {invite.code}
             </p>
             {expiryLabel && (
-              <p className="text-xs text-[#8B5E3C] mt-2">Expires {expiryLabel}</p>
+              <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-2">Expires {expiryLabel}</p>
             )}
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={copyCode}
-              className="flex-1 py-2.5 rounded-xl border-2 border-[#E8C9A0] text-[#5C3A1E] text-sm font-medium hover:border-[#D2691E] transition-colors"
+              className="flex-1 py-2.5 rounded-xl border-2 border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 text-sm font-medium hover:border-[#D2691E] transition-colors"
             >
-              {copied ? "✓ Copied!" : "Copy Code"}
+              {copied ? "Copied!" : "Copy Code"}
             </button>
             <button
               type="button"
@@ -128,7 +131,7 @@ function InviteSection({ householdId }: { householdId: string }) {
             type="button"
             onClick={generate}
             disabled={generating}
-            className="w-full text-xs text-[#8B5E3C] hover:text-[#D2691E] transition-colors py-1"
+            className="w-full text-xs text-[#8B5E3C] dark:text-gray-400 hover:text-[#D2691E] transition-colors py-1"
           >
             Generate new code
           </button>
@@ -136,7 +139,7 @@ function InviteSection({ householdId }: { householdId: string }) {
       )}
 
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mt-3">
+        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mt-3">
           {error}
         </p>
       )}
@@ -157,7 +160,7 @@ function MembersSection({
 }) {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
         <Skeleton className="h-5 w-36 mb-4" />
         <div className="space-y-3">
           {[0, 1].map((i) => (
@@ -175,8 +178,8 @@ function MembersSection({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
-      <h3 className="font-semibold text-[#3D2010] mb-4 flex items-center gap-2">
+    <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
+      <h3 className="font-semibold text-[#3D2010] dark:text-gray-100 mb-4 flex items-center gap-2">
         <span>👥</span> Kitchen Members
       </h3>
       <div className="space-y-3">
@@ -184,13 +187,13 @@ function MembersSection({
           <div key={m.id} className="flex items-center gap-3">
             <Avatar member={m} size={40} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#3D2010] truncate">
+              <p className="text-sm font-semibold text-[#3D2010] dark:text-gray-100 truncate">
                 {m.display_name ?? "Unknown user"}
                 {m.user_id === currentUserId && (
-                  <span className="text-xs font-normal text-[#8B5E3C] ml-1">(you)</span>
+                  <span className="text-xs font-normal text-[#8B5E3C] dark:text-gray-400 ml-1">(you)</span>
                 )}
               </p>
-              <p className="text-xs text-[#8B5E3C] capitalize">{m.role}</p>
+              <p className="text-xs text-[#8B5E3C] dark:text-gray-400 capitalize">{m.role}</p>
             </div>
           </div>
         ))}
@@ -221,9 +224,9 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0]">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg">
         <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347]" />
-        <div className="flex items-center gap-3 px-5 py-4 bg-white border-b border-[#E8C9A0]">
+        <div className="flex items-center gap-3 px-5 py-4 bg-white dark:bg-dark-surface border-b border-[#E8C9A0] dark:border-dark-border">
           <Skeleton className="w-9 h-9 rounded-xl" />
           <Skeleton className="h-5 w-32 flex-1" />
         </div>
@@ -238,9 +241,9 @@ export default function SettingsPage() {
 
   if (!household) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-[#8B5E3C]">No household found.</p>
+          <p className="text-[#8B5E3C] dark:text-gray-400">No household found.</p>
           <Link href="/onboarding" className="text-[#D2691E] text-sm mt-2 block hover:underline">
             Set up your kitchen →
           </Link>
@@ -250,25 +253,25 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0]">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg">
       <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347]" />
 
-      <div className="flex items-center gap-3 px-5 py-4 bg-white border-b border-[#E8C9A0]">
+      <div className="flex items-center gap-3 px-5 py-4 bg-white dark:bg-dark-surface border-b border-[#E8C9A0] dark:border-dark-border">
         <Link
           href="/"
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-[#8B5E3C] hover:bg-[#FFF0E0] transition-colors"
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-[#8B5E3C] dark:text-gray-400 hover:bg-[#FFF0E0] dark:hover:bg-dark-card transition-colors"
         >
           ←
         </Link>
         <div className="flex-1">
-          <h1 className="font-bold text-[#3D2010] text-base">Kitchen Settings</h1>
+          <h1 className="font-bold text-[#3D2010] dark:text-gray-100 text-base">Kitchen Settings</h1>
         </div>
         <span className="text-lg">⚙️</span>
       </div>
 
       <div className="px-5 py-6 max-w-lg mx-auto space-y-4">
-        <div className="bg-white rounded-2xl p-5 border border-[#E8C9A0]">
-          <h3 className="font-semibold text-[#3D2010] mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
+          <h3 className="font-semibold text-[#3D2010] dark:text-gray-100 mb-4 flex items-center gap-2">
             <span>🏠</span> Your Kitchen
           </h3>
           <div className="space-y-2.5">
@@ -288,7 +291,44 @@ export default function SettingsPage() {
           loading={membLoading}
         />
 
+        <ThemeSection />
+
         <InviteSection householdId={household.id} />
+      </div>
+    </div>
+  );
+}
+
+const THEME_OPTIONS: { value: ThemeOption; label: string; icon: string }[] = [
+  { value: "light", label: "Light", icon: "☀️" },
+  { value: "dark", label: "Dark", icon: "🌙" },
+  { value: "system", label: "System", icon: "💻" },
+];
+
+function ThemeSection() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
+      <h3 className="font-semibold text-[#3D2010] dark:text-gray-100 mb-4 flex items-center gap-2">
+        <span>🎨</span> Appearance
+      </h3>
+      <div className="flex gap-2">
+        {THEME_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setTheme(opt.value)}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+              theme === opt.value
+                ? "bg-[#D2691E] text-white"
+                : "border-2 border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-300 hover:border-[#D2691E]"
+            }`}
+          >
+            <span>{opt.icon}</span>
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -296,9 +336,9 @@ export default function SettingsPage() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center py-1.5 border-b border-[#F5E6D3] last:border-0">
-      <span className="text-xs text-[#8B5E3C] font-medium">{label}</span>
-      <span className="text-sm text-[#3D2010] font-semibold">{value}</span>
+    <div className="flex justify-between items-center py-1.5 border-b border-[#F5E6D3] dark:border-dark-border-light last:border-0">
+      <span className="text-xs text-[#8B5E3C] dark:text-gray-400 font-medium">{label}</span>
+      <span className="text-sm text-[#3D2010] dark:text-gray-100 font-semibold">{value}</span>
     </div>
   );
 }

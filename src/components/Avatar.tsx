@@ -16,7 +16,7 @@ export function Avatar({ member, size = 32, overlap = false }: AvatarProps) {
     .toUpperCase()
     .slice(0, 2);
 
-  const ring = overlap ? "ring-2 ring-white" : "";
+  const ring = overlap ? "ring-2 ring-white dark:ring-dark-surface" : "";
 
   if (member.avatar_url) {
     return (
@@ -33,7 +33,7 @@ export function Avatar({ member, size = 32, overlap = false }: AvatarProps) {
   }
   return (
     <div
-      className={`rounded-full bg-[#FFE8CC] flex items-center justify-center font-bold text-[#D2691E] ${ring}`}
+      className={`rounded-full bg-[#FFE8CC] dark:bg-[#4A3020] flex items-center justify-center font-bold text-[#D2691E] ${ring}`}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
       {initials}

@@ -27,7 +27,7 @@ const features = [
 
 export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-[#FFF8F0] flex flex-col">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5">
         <span className="text-2xl font-bold text-[#D2691E]">🍲 Rasoi</span>
@@ -42,14 +42,14 @@ export default function WelcomePage() {
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         <div className="text-6xl mb-4">🍲</div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-gray-100 leading-tight mb-4">
           Your Smart
           <br />
           <span className="text-[#D2691E]">Indian Kitchen</span>
           <br />
           Assistant
         </h1>
-        <p className="text-lg text-gray-500 max-w-sm mb-8">
+        <p className="text-lg text-gray-500 dark:text-gray-400 max-w-sm mb-8">
           Manage your fridge, get meal ideas, and sync your grocery list — all in
           one app built for Indian households.
         </p>
@@ -70,13 +70,13 @@ export default function WelcomePage() {
           {features.map((f) => (
             <div
               key={f.title}
-              className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100"
+              className="bg-white dark:bg-dark-card rounded-2xl p-4 shadow-sm border border-orange-100 dark:border-dark-border"
             >
               <div className="text-3xl mb-2">{f.emoji}</div>
-              <div className="font-semibold text-gray-800 text-sm mb-1">
+              <div className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1">
                 {f.title}
               </div>
-              <div className="text-xs text-gray-500 leading-snug">{f.desc}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 leading-snug">{f.desc}</div>
             </div>
           ))}
         </div>

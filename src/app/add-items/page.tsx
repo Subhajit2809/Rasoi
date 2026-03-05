@@ -48,7 +48,7 @@ function ItemChip({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center px-3 py-2 rounded-full border border-[#E8C9A0] bg-white text-[#5C3A1E] text-sm font-medium hover:border-[#D2691E] hover:bg-[#FFF0E0] active:scale-95 transition-all"
+        className="flex items-center px-3 py-2 rounded-full border border-[#E8C9A0] dark:border-dark-border bg-white dark:bg-dark-surface text-[#5C3A1E] dark:text-gray-200 text-sm font-medium hover:border-[#D2691E] hover:bg-[#FFF0E0] dark:hover:bg-dark-card active:scale-95 transition-all"
       >
         {preset.name}
       </button>
@@ -56,7 +56,7 @@ function ItemChip({
   }
 
   return (
-    <div className="flex items-center gap-0.5 pl-2.5 pr-1 py-1 rounded-full bg-[#D2691E] text-white text-sm font-medium shadow-sm">
+    <div className="flex items-center gap-0.5 pl-2.5 pr-1 py-1 rounded-full bg-[#D2691E] text-white text-sm font-medium shadow-sm dark:shadow-none">
       <span className="text-xs mr-0.5 opacity-90">✓</span>
       <span className="whitespace-nowrap">{preset.name}</span>
       <div className="flex items-center ml-1.5 bg-white/20 rounded-full px-1 py-0.5 gap-0.5">
@@ -193,32 +193,32 @@ export default function AddItemsPage() {
       }}
     >
       <div
-        className={`w-full bg-white rounded-t-3xl flex flex-col overflow-hidden ${
+        className={`w-full bg-white dark:bg-dark-surface rounded-t-3xl flex flex-col overflow-hidden ${
           closing ? "animate-slide-down" : "animate-slide-up"
         }`}
         style={{ maxHeight: "88svh" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-[#E8C9A0]" />
+          <div className="w-10 h-1 rounded-full bg-[#E8C9A0] dark:bg-dark-border" />
         </div>
 
         <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-[#3D2010]">Add to Fridge</h2>
-            <p className="text-xs text-[#8B5E3C]">Tap items to select, then adjust qty</p>
+            <h2 className="text-lg font-bold text-[#3D2010] dark:text-gray-100">Add to Fridge</h2>
+            <p className="text-xs text-[#8B5E3C] dark:text-gray-400">Tap items to select, then adjust qty</p>
           </div>
           <button
             type="button"
             onClick={dismiss}
-            className="w-8 h-8 rounded-full bg-[#F5E6D3] flex items-center justify-center text-[#5C3A1E] hover:bg-[#E8C9A0] transition-colors text-lg leading-none"
+            className="w-8 h-8 rounded-full bg-[#F5E6D3] dark:bg-dark-border flex items-center justify-center text-[#5C3A1E] dark:text-gray-200 hover:bg-[#E8C9A0] dark:hover:bg-dark-border-light transition-colors text-lg leading-none"
             aria-label="Close"
           >
             ×
           </button>
         </div>
 
-        <div className="flex gap-2 px-4 pb-3 flex-shrink-0 border-b border-[#F5E6D3]">
+        <div className="flex gap-2 px-4 pb-3 flex-shrink-0 border-b border-[#F5E6D3] dark:border-dark-border-light">
           {CATEGORIES.map((cat) => {
             const active = cat === activeCategory;
             const count = PRESET_ITEMS.filter(
@@ -231,8 +231,8 @@ export default function AddItemsPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold transition-all ${
                   active
-                    ? "bg-[#D2691E] text-white shadow-sm"
-                    : "bg-[#FFF0E0] text-[#5C3A1E] hover:bg-[#FFE0C0]"
+                    ? "bg-[#D2691E] text-white shadow-sm dark:shadow-none"
+                    : "bg-[#FFF0E0] dark:bg-dark-card text-[#5C3A1E] dark:text-gray-200 hover:bg-[#FFE0C0] dark:hover:bg-dark-border"
                 }`}
               >
                 <span>{CATEGORY_EMOJI[cat]}</span>
@@ -268,7 +268,7 @@ export default function AddItemsPage() {
               />
             ))}
           </div>
-          <p className="text-xs text-[#B8967A] mt-5 text-center">
+          <p className="text-xs text-[#B8967A] dark:text-gray-500 mt-5 text-center">
             Don&apos;t see an item?{" "}
             <span className="font-medium text-[#D2691E]">
               Custom items coming soon
@@ -276,13 +276,13 @@ export default function AddItemsPage() {
           </p>
         </div>
 
-        <div className="flex-shrink-0 px-4 pt-3 pb-6 border-t border-[#F5E6D3] bg-white">
+        <div className="flex-shrink-0 px-4 pt-3 pb-6 border-t border-[#F5E6D3] dark:border-dark-border-light bg-white dark:bg-dark-surface">
           {totalSelected > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3 max-h-16 overflow-y-auto">
               {Array.from(selections.values()).map(({ preset, qty }) => (
                 <span
                   key={preset.name}
-                  className="text-xs bg-[#FFF0E0] text-[#5C3A1E] border border-[#E8C9A0] px-2 py-0.5 rounded-full"
+                  className="text-xs bg-[#FFF0E0] dark:bg-dark-card text-[#5C3A1E] dark:text-gray-200 border border-[#E8C9A0] dark:border-dark-border px-2 py-0.5 rounded-full"
                 >
                   {preset.name} · {fmtQty(qty, preset.unit)}
                 </span>
@@ -291,14 +291,14 @@ export default function AddItemsPage() {
           )}
 
           {successMsg && (
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-xl px-3 py-2.5 mb-3 animate-slide-in-right">
-              <span className="text-green-600 font-bold">✓</span>
+            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400 rounded-xl px-3 py-2.5 mb-3 animate-slide-in-right">
+              <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
               <p className="text-xs font-semibold">{successMsg}</p>
             </div>
           )}
 
           {error && (
-            <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-3">
+            <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2 mb-3">
               {error}
             </p>
           )}
@@ -307,7 +307,7 @@ export default function AddItemsPage() {
             type="button"
             onClick={handleSubmit}
             disabled={totalSelected === 0 || submitting || !!successMsg}
-            className="w-full py-4 rounded-2xl bg-[#D2691E] text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-[#B85C18] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#D2691E]/25"
+            className="w-full py-4 rounded-2xl bg-[#D2691E] text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-[#B85C18] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#D2691E]/25 dark:shadow-none"
           >
             {submitting ? (
               <>

@@ -77,8 +77,7 @@ function LoginContent() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative"
-      style={{ backgroundColor: "#FFF8F0" }}
+      className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative bg-[#FFF8F0] dark:bg-dark-bg"
     >
       {/* Top accent bar */}
       <div
@@ -101,13 +100,12 @@ function LoginContent() {
           </div>
 
           <h1
-            className="text-5xl font-extrabold tracking-tight leading-none"
-            style={{ color: "#D2691E" }}
+            className="text-5xl font-extrabold tracking-tight leading-none text-[#D2691E]"
           >
             Rasoi
           </h1>
 
-          <p className="text-sm font-medium" style={{ color: "#8B5E3C" }}>
+          <p className="text-sm font-medium text-[#8B5E3C] dark:text-gray-400">
             Smart kitchen for Indian homes
           </p>
         </div>
@@ -117,8 +115,7 @@ function LoginContent() {
           {FEATURES.map(({ emoji, label }) => (
             <li
               key={label}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium"
-              style={{ backgroundColor: "#FFE8CC", color: "#6B3A1F" }}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium bg-[#FFE8CC] dark:bg-[#4A3020] text-[#6B3A1F] dark:text-gray-200"
             >
               <span className="text-xl leading-none" aria-hidden="true">
                 {emoji}
@@ -133,13 +130,7 @@ function LoginContent() {
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl text-sm font-semibold bg-white transition-transform duration-100 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{
-              color: "#3C4043",
-              border: "1px solid #DADCE0",
-              boxShadow:
-                "0 1px 3px rgba(60,64,67,.25), 0 4px 8px rgba(60,64,67,.12)",
-            }}
+            className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl text-sm font-semibold bg-white dark:bg-dark-surface text-[#3C4043] dark:text-gray-200 border border-[#DADCE0] dark:border-dark-border shadow-[0_1px_3px_rgba(60,64,67,.25),0_4px_8px_rgba(60,64,67,.12)] dark:shadow-lg dark:shadow-black/20 transition-transform duration-100 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed"
             aria-busy={loading}
           >
             {loading ? (
@@ -163,8 +154,7 @@ function LoginContent() {
 
         {/* ── Footer note ──────────────────────────────────────── */}
         <p
-          className="text-center text-xs leading-relaxed"
-          style={{ color: "#A0522D" }}
+          className="text-center text-xs leading-relaxed text-[#A0522D] dark:text-[#D2691E]"
         >
           For couples managing their kitchen together — in real time.
         </p>

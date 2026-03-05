@@ -69,7 +69,7 @@ function ProgressBar({ step }: { step: number }) {
         <div
           key={s}
           className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-            s <= step ? "bg-[#D2691E]" : "bg-[#E8C9A0]"
+            s <= step ? "bg-[#D2691E]" : "bg-[#E8C9A0] dark:bg-dark-border"
           }`}
         />
       ))}
@@ -89,8 +89,8 @@ function StepLabel({ step }: { step: number }) {
       <p className="text-xs font-semibold tracking-widest text-[#D2691E] uppercase mb-1">
         Step {step} of 3
       </p>
-      <h2 className="text-2xl font-bold text-[#3D2010]">{title}</h2>
-      <p className="text-sm text-[#8B5E3C] mt-0.5">{sub}</p>
+      <h2 className="text-2xl font-bold text-[#3D2010] dark:text-gray-100">{title}</h2>
+      <p className="text-sm text-[#8B5E3C] dark:text-gray-400 mt-0.5">{sub}</p>
     </div>
   );
 }
@@ -239,7 +239,7 @@ export default function OnboardingPage() {
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#D2691E] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
     direction === "forward" ? "animate-slide-in-right" : "animate-slide-in-left";
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] flex flex-col">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex flex-col">
       {/* top accent stripe */}
       <div className="h-1 bg-gradient-to-r from-[#D2691E] via-[#FF8C42] to-[#FFB347]" />
 
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-6">
               {/* Name */}
               <div>
-                <label className="block text-sm font-semibold text-[#5C3A1E] mb-2">
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-2">
                   Kitchen name
                 </label>
                 <input
@@ -280,13 +280,13 @@ export default function OnboardingPage() {
                   onChange={(e) => setHouseholdName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !loading && householdName.trim() && handleStep1Next()}
                   placeholder="e.g. Sharma ki Rasoi, Our Home"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-[#E8C9A0] bg-white text-[#3D2010] placeholder-[#C4A882] focus:outline-none focus:ring-2 focus:ring-[#D2691E]/40 focus:border-[#D2691E] text-sm transition-all"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#E8C9A0] dark:border-dark-border bg-white dark:bg-dark-surface text-[#3D2010] dark:text-gray-100 placeholder-[#C4A882] dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#D2691E]/40 focus:border-[#D2691E] text-sm transition-all"
                 />
               </div>
 
               {/* Size */}
               <div>
-                <label className="block text-sm font-semibold text-[#5C3A1E] mb-3">
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-3">
                   Household size
                 </label>
                 <div className="flex gap-3">
@@ -298,14 +298,14 @@ export default function OnboardingPage() {
                       className={`w-12 h-12 rounded-2xl text-base font-bold border-2 transition-all ${
                         householdSize === n
                           ? "bg-[#D2691E] border-[#D2691E] text-white shadow-md scale-105"
-                          : "bg-white border-[#E8C9A0] text-[#5C3A1E] hover:border-[#D2691E]"
+                          : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]"
                       }`}
                     >
                       {n}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-[#8B5E3C] mt-2">
+                <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-2">
                   {householdSize === 1 ? "Just you" : `${householdSize} people share this kitchen`}
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-6">
               {/* Diet */}
               <div>
-                <label className="block text-sm font-semibold text-[#5C3A1E] mb-3">
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-3">
                   Diet preference
                 </label>
                 <div className="flex flex-col gap-2">
@@ -337,20 +337,20 @@ export default function OnboardingPage() {
                       onClick={() => setDietPref(value)}
                       className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 text-left transition-all ${
                         dietPref === value
-                          ? "bg-[#FFF0E0] border-[#D2691E]"
-                          : "bg-white border-[#E8C9A0] hover:border-[#D2691E]/50"
+                          ? "bg-[#FFF0E0] dark:bg-dark-card border-[#D2691E]"
+                          : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border hover:border-[#D2691E]/50"
                       }`}
                     >
                       <span className="text-2xl">{emoji}</span>
                       <div className="flex-1">
-                        <p className="font-semibold text-[#3D2010] text-sm">{label}</p>
-                        <p className="text-xs text-[#8B5E3C]">{desc}</p>
+                        <p className="font-semibold text-[#3D2010] dark:text-gray-100 text-sm">{label}</p>
+                        <p className="text-xs text-[#8B5E3C] dark:text-gray-400">{desc}</p>
                       </div>
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
                           dietPref === value
                             ? "border-[#D2691E] bg-[#D2691E]"
-                            : "border-[#C4A882]"
+                            : "border-[#C4A882] dark:border-gray-600"
                         }`}
                       >
                         {dietPref === value && (
@@ -364,7 +364,7 @@ export default function OnboardingPage() {
 
               {/* Region */}
               <div>
-                <label className="block text-sm font-semibold text-[#5C3A1E] mb-3">
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-3">
                   Your cuisine region
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
                         region === r
                           ? "bg-[#D2691E] border-[#D2691E] text-white"
-                          : "bg-white border-[#E8C9A0] text-[#5C3A1E] hover:border-[#D2691E]"
+                          : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]"
                       }`}
                     >
                       {r}
@@ -402,7 +402,7 @@ export default function OnboardingPage() {
           {/* ══ Step 3 ══ */}
           {step === 3 && (
             <div className="flex flex-col gap-4">
-              <p className="text-xs text-[#8B5E3C]">
+              <p className="text-xs text-[#8B5E3C] dark:text-gray-400">
                 Tap items you always keep stocked. These are your kitchen backbone — they won&apos;t trigger grocery alerts.
                 <span className="font-semibold text-[#D2691E]"> {checked.size} selected</span>
               </p>
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
                   return (
                     <div key={category}>
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-sm font-semibold text-[#3D2010]">
+                        <span className="text-sm font-semibold text-[#3D2010] dark:text-gray-100">
                           {emoji} {category}
                         </span>
                         <button
@@ -425,8 +425,8 @@ export default function OnboardingPage() {
                             allOn
                               ? "bg-[#D2691E] text-white"
                               : someOn
-                              ? "bg-[#FFE8CC] text-[#D2691E]"
-                              : "text-[#D2691E] hover:bg-[#FFE8CC]"
+                              ? "bg-[#FFE8CC] dark:bg-[#4A3020] text-[#D2691E]"
+                              : "text-[#D2691E] hover:bg-[#FFE8CC] dark:hover:bg-[#4A3020]"
                           }`}
                         >
                           {allOn ? "Deselect all" : "Select all"}
@@ -443,7 +443,7 @@ export default function OnboardingPage() {
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border-2 transition-all ${
                                 on
                                   ? "bg-[#D2691E] border-[#D2691E] text-white"
-                                  : "bg-white border-[#E8C9A0] text-[#5C3A1E] hover:border-[#D2691E]/60"
+                                  : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]/60"
                               }`}
                             >
                               {on && <span className="text-xs">✓</span>}
@@ -511,7 +511,7 @@ function SecondaryBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="py-3.5 px-5 rounded-2xl border-2 border-[#E8C9A0] text-[#8B5E3C] font-semibold text-sm hover:border-[#D2691E] active:scale-95 transition-all disabled:opacity-40"
+      className="py-3.5 px-5 rounded-2xl border-2 border-[#E8C9A0] dark:border-dark-border text-[#8B5E3C] dark:text-gray-400 font-semibold text-sm hover:border-[#D2691E] active:scale-95 transition-all disabled:opacity-40"
     >
       {label}
     </button>
@@ -520,7 +520,7 @@ function SecondaryBtn({
 
 function ErrorBox({ msg }: { msg: string }) {
   return (
-    <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+    <div className="text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3">
       {msg}
     </div>
   );

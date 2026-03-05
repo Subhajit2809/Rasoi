@@ -135,24 +135,24 @@ function SuggestionCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-[#E8C9A0] border-l-4 ${matchBorderColor(score)} p-4`}
+      className={`bg-white dark:bg-dark-surface rounded-2xl border border-[#E8C9A0] dark:border-dark-border border-l-4 ${matchBorderColor(score)} p-4 dark:shadow-none`}
     >
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[#3D2010] text-base leading-tight truncate">
+          <p className="font-bold text-[#3D2010] dark:text-gray-100 text-base leading-tight truncate">
             {recipe.name}
           </p>
-          <p className="text-xs text-[#8B5E3C] mt-0.5">
+          <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-0.5">
             {recipe.region} · {DIET_EMOJI[recipe.diet_type]} · {recipe.cook_time_mins} min
           </p>
           <div className="mt-2.5">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] text-[#8B5E3C]">
+              <span className="text-[10px] text-[#8B5E3C] dark:text-gray-400">
                 {matchCount}/{totalIngredients} ingredients ready
               </span>
-              <span className="text-[10px] font-bold text-[#5C3A1E]">{pct}%</span>
+              <span className="text-[10px] font-bold text-[#5C3A1E] dark:text-gray-200">{pct}%</span>
             </div>
-            <div className="h-1.5 bg-[#F5E6D3] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[#F5E6D3] dark:bg-dark-border rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${matchBarColor(score)}`}
                 style={{ width: `${pct}%` }}
@@ -177,17 +177,17 @@ function RecipeRow({
 }) {
   const { recipe, matchCount, totalIngredients } = m;
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-[#F5E6D3] last:border-0">
+    <div className="flex items-center gap-3 py-3 border-b border-[#F5E6D3] dark:border-dark-border-light last:border-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-semibold text-[#3D2010] text-sm">{recipe.name}</p>
+          <p className="font-semibold text-[#3D2010] dark:text-gray-100 text-sm">{recipe.name}</p>
           {matchCount > 0 && (
-            <span className="text-[10px] bg-[#FFF0E0] text-[#D2691E] border border-[#E8C9A0] px-1.5 py-0.5 rounded-full font-semibold">
+            <span className="text-[10px] bg-[#FFF0E0] dark:bg-dark-card text-[#D2691E] border border-[#E8C9A0] dark:border-dark-border px-1.5 py-0.5 rounded-full font-semibold">
               {matchCount}/{totalIngredients}
             </span>
           )}
         </div>
-        <p className="text-xs text-[#8B5E3C] mt-0.5">
+        <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-0.5">
           {recipe.region} · {DIET_EMOJI[recipe.diet_type]} · {recipe.cook_time_mins} min
         </p>
       </div>
@@ -324,25 +324,25 @@ export default function ICookedPage() {
       )}
 
       <div
-        className={`w-full bg-[#FFF8F0] rounded-t-3xl flex flex-col overflow-hidden ${
+        className={`w-full bg-[#FFF8F0] dark:bg-dark-bg rounded-t-3xl flex flex-col overflow-hidden ${
           closing ? "animate-slide-down" : "animate-slide-up"
         }`}
         style={{ maxHeight: "92svh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 bg-white rounded-t-3xl">
-          <div className="w-10 h-1 rounded-full bg-[#E8C9A0]" />
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 bg-white dark:bg-dark-surface rounded-t-3xl">
+          <div className="w-10 h-1 rounded-full bg-[#E8C9A0] dark:bg-dark-border" />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 bg-white flex-shrink-0 border-b border-[#F5E6D3]">
+        <div className="flex items-center justify-between px-5 py-3 bg-white dark:bg-dark-surface flex-shrink-0 border-b border-[#F5E6D3] dark:border-dark-border-light">
           <div>
-            <h2 className="text-lg font-bold text-[#3D2010]">🍳 I Cooked</h2>
-            <p className="text-xs text-[#8B5E3C]">Tap a dish to log it</p>
+            <h2 className="text-lg font-bold text-[#3D2010] dark:text-gray-100">🍳 I Cooked</h2>
+            <p className="text-xs text-[#8B5E3C] dark:text-gray-400">Tap a dish to log it</p>
           </div>
           <button
             type="button"
             onClick={dismiss}
-            className="w-8 h-8 rounded-full bg-[#F5E6D3] flex items-center justify-center text-[#5C3A1E] hover:bg-[#E8C9A0] transition-colors text-lg leading-none"
+            className="w-8 h-8 rounded-full bg-[#F5E6D3] dark:bg-dark-border flex items-center justify-center text-[#5C3A1E] dark:text-gray-200 hover:bg-[#E8C9A0] dark:hover:bg-dark-border-light transition-colors text-lg leading-none"
           >
             ×
           </button>
@@ -351,25 +351,25 @@ export default function ICookedPage() {
         <div className="flex-1 overflow-y-auto">
           <section className="px-4 pt-5 pb-4">
             <div className="flex items-baseline justify-between mb-3">
-              <h3 className="font-bold text-[#3D2010] text-sm flex items-center gap-1.5">
+              <h3 className="font-bold text-[#3D2010] dark:text-gray-100 text-sm flex items-center gap-1.5">
                 ✨ Suggested for you
               </h3>
-              <p className="text-xs text-[#8B5E3C]">based on your fridge</p>
+              <p className="text-xs text-[#8B5E3C] dark:text-gray-400">based on your fridge</p>
             </div>
 
             {dataLoading ? (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-24 rounded-2xl bg-[#F5E6D3] animate-pulse" />
+                  <div key={i} className="h-24 rounded-2xl bg-[#F5E6D3] dark:bg-dark-border animate-pulse" />
                 ))}
               </div>
             ) : suggestions.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-dashed border-[#E8C9A0] p-5 text-center">
+              <div className="bg-white dark:bg-dark-surface rounded-2xl border border-dashed border-[#E8C9A0] dark:border-dark-border p-5 text-center">
                 <p className="text-2xl mb-2">🛒</p>
-                <p className="text-sm font-medium text-[#5C3A1E]">
+                <p className="text-sm font-medium text-[#5C3A1E] dark:text-gray-200">
                   Add more ingredients for personalised suggestions
                 </p>
-                <p className="text-xs text-[#8B5E3C] mt-1">
+                <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mt-1">
                   Browse all recipes below ↓
                 </p>
               </div>
@@ -388,18 +388,18 @@ export default function ICookedPage() {
           </section>
 
           <section className="px-4 pb-8">
-            <div className="sticky top-0 z-10 bg-[#FFF8F0] pb-2 pt-1">
+            <div className="sticky top-0 z-10 bg-[#FFF8F0] dark:bg-dark-bg pb-2 pt-1">
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-bold text-[#3D2010] text-sm flex-shrink-0">
+                <h3 className="font-bold text-[#3D2010] dark:text-gray-100 text-sm flex-shrink-0">
                   📖 All Recipes
                 </h3>
-                <span className="text-xs text-[#8B5E3C]">
+                <span className="text-xs text-[#8B5E3C] dark:text-gray-400">
                   ({filteredRecipes.length})
                 </span>
               </div>
 
               <div className="relative mb-2">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B5E3C] text-sm">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B5E3C] dark:text-gray-400 text-sm">
                   🔍
                 </span>
                 <input
@@ -407,7 +407,7 @@ export default function ICookedPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search recipes…"
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E8C9A0] rounded-xl text-sm text-[#3D2010] placeholder-[#C4A882] focus:outline-none focus:border-[#D2691E] focus:ring-1 focus:ring-[#D2691E]/30 transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-dark-surface border border-[#E8C9A0] dark:border-dark-border rounded-xl text-sm text-[#3D2010] dark:text-gray-100 placeholder-[#C4A882] dark:placeholder-gray-600 focus:outline-none focus:border-[#D2691E] focus:ring-1 focus:ring-[#D2691E]/30 transition-all"
                 />
               </div>
 
@@ -420,7 +420,7 @@ export default function ICookedPage() {
                     className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       dietFilter === id
                         ? "bg-[#D2691E] text-white"
-                        : "bg-white border border-[#E8C9A0] text-[#5C3A1E] hover:border-[#D2691E]"
+                        : "bg-white dark:bg-dark-surface border border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]"
                     }`}
                   >
                     <span>{emoji}</span>
@@ -433,13 +433,13 @@ export default function ICookedPage() {
             {dataLoading ? (
               <div className="space-y-3 mt-2">
                 {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 rounded-xl bg-[#F5E6D3] animate-pulse" />
+                  <div key={i} className="h-12 rounded-xl bg-[#F5E6D3] dark:bg-dark-border animate-pulse" />
                 ))}
               </div>
             ) : filteredRecipes.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-2xl mb-2">🍽️</p>
-                <p className="text-sm text-[#5C3A1E]">No recipes found</p>
+                <p className="text-sm text-[#5C3A1E] dark:text-gray-200">No recipes found</p>
                 {search && (
                   <button
                     type="button"
@@ -451,7 +451,7 @@ export default function ICookedPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-[#E8C9A0] px-4 mt-2">
+              <div className="bg-white dark:bg-dark-surface rounded-2xl border border-[#E8C9A0] dark:border-dark-border px-4 mt-2 dark:shadow-none">
                 {filteredRecipes.map((m) => (
                   <RecipeRow
                     key={m.recipe.id}

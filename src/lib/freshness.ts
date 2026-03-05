@@ -23,21 +23,21 @@ export const FRESHNESS_CONFIG: Record<
     label: "Fresh",
     bar: "bg-green-400",
     border: "border-l-green-400",
-    badge: "bg-green-50 text-green-700",
+    badge: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   },
   soon: {
     dot: "bg-yellow-400",
     label: "Eat Soon",
     bar: "bg-yellow-400",
     border: "border-l-yellow-400",
-    badge: "bg-yellow-50 text-yellow-700",
+    badge: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   },
   toss: {
     dot: "bg-red-500",
     label: "Toss It",
     bar: "bg-red-400",
     border: "border-l-red-400",
-    badge: "bg-red-50 text-red-700",
+    badge: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   },
 };
 

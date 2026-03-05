@@ -111,9 +111,9 @@ function scoreRecipes(
 
 function MatchBar({ pct }: { pct: number }) {
   const color =
-    pct >= 0.65 ? "bg-green-500" : pct >= 0.35 ? "bg-amber-400" : "bg-gray-300";
+    pct >= 0.65 ? "bg-green-500" : pct >= 0.35 ? "bg-amber-400" : "bg-gray-300 dark:bg-gray-600";
   return (
-    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+    <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-dark-card overflow-hidden">
       <div
         className={`h-full rounded-full transition-all ${color}`}
         style={{ width: `${Math.min(100, Math.round(pct * 100))}%` }}
@@ -124,9 +124,9 @@ function MatchBar({ pct }: { pct: number }) {
 
 function MatchLabel({ pct, matchCount, total }: { pct: number; matchCount: number; total: number }) {
   if (pct >= 1) {
-    return <span className="text-xs font-semibold text-green-600">✅ All ingredients</span>;
+    return <span className="text-xs font-semibold text-green-600 dark:text-green-400">All ingredients</span>;
   }
-  const color = pct >= 0.65 ? "text-green-600" : pct >= 0.35 ? "text-amber-600" : "text-gray-500";
+  const color = pct >= 0.65 ? "text-green-600 dark:text-green-400" : pct >= 0.35 ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400";
   return (
     <span className={`text-xs font-semibold ${color}`}>
       {matchCount}/{total} match ({Math.round(pct * 100)}%)
@@ -146,33 +146,33 @@ function RecipeCard({
   const missing = sr.ingredients.filter((i) => !i.have);
   const expiring = sr.ingredients.filter((i) => i.expiring);
   const borderColor =
-    sr.matchPct >= 0.65 ? "border-green-400" : sr.matchPct >= 0.35 ? "border-amber-400" : "border-gray-200";
+    sr.matchPct >= 0.65 ? "border-green-400" : sr.matchPct >= 0.35 ? "border-amber-400" : "border-gray-200 dark:border-dark-border";
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left bg-white rounded-2xl border-l-4 ${borderColor} shadow-sm p-4 flex flex-col gap-2 active:scale-[0.98] transition-transform`}
+      className={`w-full text-left bg-white dark:bg-dark-surface rounded-2xl border-l-4 ${borderColor} shadow-sm dark:shadow-none p-4 flex flex-col gap-2 active:scale-[0.98] transition-transform`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             {rank === 1 && (
-              <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                ⭐ Top Pick
+              <span className="text-xs font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                Top Pick
               </span>
             )}
             {expiring.length > 0 && (
-              <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                🔥 Use soon
+              <span className="text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                Use soon
               </span>
             )}
           </div>
-          <h3 className="font-semibold text-gray-900 mt-1 leading-snug">{sr.recipe.name}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {sr.recipe.region} · {sr.recipe.category} · ⏱ {sr.recipe.cook_time_mins} min
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mt-1 leading-snug">{sr.recipe.name}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            {sr.recipe.region} · {sr.recipe.category} · {sr.recipe.cook_time_mins} min
           </p>
         </div>
-        <div className="text-gray-400 text-lg flex-shrink-0">›</div>
+        <div className="text-gray-400 dark:text-gray-500 text-lg flex-shrink-0">›</div>
       </div>
 
       <div className="space-y-1">
@@ -185,13 +185,13 @@ function RecipeCard({
           {missing.slice(0, 4).map((m) => (
             <span
               key={m.name}
-              className="text-xs bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full"
+              className="text-xs bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/40 px-2 py-0.5 rounded-full"
             >
-              ✕ {m.name}
+              {m.name}
             </span>
           ))}
           {missing.length > 4 && (
-            <span className="text-xs text-gray-400 px-1 py-0.5">
+            <span className="text-xs text-gray-400 dark:text-gray-500 px-1 py-0.5">
               +{missing.length - 4} more
             </span>
           )}
@@ -259,22 +259,22 @@ function RecipeDetailSheet({
     >
       <div className="absolute inset-0 bg-black/50" onClick={close} />
       <div
-        className={`relative bg-white rounded-t-3xl w-full max-h-[90vh] flex flex-col ${closing ? "animate-slide-down" : "animate-slide-up"}`}
+        className={`relative bg-white dark:bg-dark-surface rounded-t-3xl w-full max-h-[90vh] flex flex-col ${closing ? "animate-slide-down" : "animate-slide-up"}`}
       >
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+          <div className="w-10 h-1 bg-gray-200 dark:bg-dark-border rounded-full" />
         </div>
-        <div className="px-5 py-3 border-b border-gray-100">
+        <div className="px-5 py-3 border-b border-gray-100 dark:border-dark-border-light">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{sr.recipe.name}</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {sr.recipe.region} · {sr.recipe.category} · ⏱ {sr.recipe.cook_time_mins} min
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{sr.recipe.name}</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {sr.recipe.region} · {sr.recipe.category} · {sr.recipe.cook_time_mins} min
               </p>
             </div>
             <button
               onClick={close}
-              className="text-gray-400 text-2xl leading-none mt-0.5 flex-shrink-0"
+              className="text-gray-400 dark:text-gray-500 text-2xl leading-none mt-0.5 flex-shrink-0"
             >
               ×
             </button>
@@ -282,7 +282,7 @@ function RecipeDetailSheet({
         </div>
         <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6 space-y-5">
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">
               Ingredients
             </h3>
             <div className="space-y-2">
@@ -292,37 +292,37 @@ function RecipeDetailSheet({
                     className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                       ing.have
                         ? ing.expiring
-                          ? "bg-orange-100 text-orange-700"
-                          : "bg-green-100 text-green-700"
-                        : "bg-red-50 text-red-500"
+                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                          : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                        : "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400"
                     }`}
                   >
                     {ing.have ? "✓" : "✕"}
                   </span>
-                  <span className={`text-sm flex-1 ${ing.have ? "text-gray-800" : "text-gray-400"}`}>
+                  <span className={`text-sm flex-1 ${ing.have ? "text-gray-800 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}`}>
                     {ing.name}
                   </span>
-                  <span className="text-xs text-gray-400">{ing.qty}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{ing.qty}</span>
                   {ing.expiring && (
-                    <span className="text-xs text-orange-600 font-medium">use soon</span>
+                    <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">use soon</span>
                   )}
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">
               Instructions
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
               {sr.recipe.instructions}
             </p>
           </div>
         </div>
-        <div className="px-5 pb-8 pt-3 border-t border-gray-100">
+        <div className="px-5 pb-8 pt-3 border-t border-gray-100 dark:border-dark-border-light">
           {toast && (
             <div className="mb-3 px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-xl text-center animate-slide-in-right">
-              🍳 Logged! Enjoy your meal.
+              Logged! Enjoy your meal.
             </div>
           )}
           <button
@@ -330,7 +330,7 @@ function RecipeDetailSheet({
             disabled={logging || toast}
             className="w-full py-4 rounded-2xl bg-[#D2691E] text-white font-semibold text-base disabled:opacity-60 active:scale-[0.98] transition-transform"
           >
-            {logging ? "Logging…" : "🍳 I Made This!"}
+            {logging ? "Logging…" : "I Made This!"}
           </button>
         </div>
       </div>
@@ -406,8 +406,8 @@ export default function SuggestionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0]">
-        <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg">
+        <div className="bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
           <Skeleton className="w-8 h-8 rounded-full" />
           <div className="space-y-2 flex-1">
             <Skeleton className="h-5 w-48" />
@@ -431,18 +431,18 @@ export default function SuggestionsPage() {
   if (!user || !household) return null;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pb-content-safe">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg pb-content-safe">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
+      <div className="bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
         <button
           onClick={() => router.back()}
-          className="text-gray-500 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="text-gray-500 dark:text-gray-400 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-card"
         >
           ‹
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Aaj Kya Banaye? 🍽️</h1>
-          <p className="text-xs text-gray-500">Ranked by what you have</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Aaj Kya Banaye? 🍽️</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Ranked by what you have</p>
         </div>
       </div>
 
@@ -461,7 +461,7 @@ export default function SuggestionsPage() {
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               timeFilter === key
                 ? "bg-[#D2691E] text-white"
-                : "bg-white text-gray-600 border border-gray-200"
+                : "bg-white dark:bg-dark-surface text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-dark-border"
             }`}
           >
             {label}
@@ -471,7 +471,7 @@ export default function SuggestionsPage() {
 
       {/* Fridge context pill */}
       <div className="px-4 pb-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           {fridgeItems.length > 0
             ? `${fridgeItems.length} item${fridgeItems.length > 1 ? "s" : ""} in fridge`
             : "No fridge items — results based on pantry staples"}{" "}
@@ -483,16 +483,16 @@ export default function SuggestionsPage() {
       {/* Recipe cards */}
       <div className="px-4 space-y-3">
         {displayedRecipes.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm mx-0">
+          <div className="bg-white dark:bg-dark-surface rounded-2xl p-8 text-center shadow-sm dark:shadow-none mx-0">
             <div className="text-4xl mb-3">
               {timeFilter !== "all" ? "⏱️" : "🥬"}
             </div>
-            <p className="font-semibold text-[#3D2010]">
+            <p className="font-semibold text-[#3D2010] dark:text-gray-100">
               {timeFilter !== "all"
                 ? "No recipes in this time range"
                 : "Add some ingredients to get meal ideas"}
             </p>
-            <p className="text-sm text-[#8B5E3C] mt-1 leading-relaxed">
+            <p className="text-sm text-[#8B5E3C] dark:text-gray-400 mt-1 leading-relaxed">
               {timeFilter !== "all" ? (
                 <button
                   onClick={() => setTimeFilter("all")}
@@ -528,8 +528,8 @@ export default function SuggestionsPage() {
 
       {loggedDishes.size > 0 && (
         <div className="px-4 mt-4">
-          <p className="text-xs text-green-600 font-medium text-center">
-            ✅ {Array.from(loggedDishes).join(", ")} logged
+          <p className="text-xs text-green-600 dark:text-green-400 font-medium text-center">
+            {Array.from(loggedDishes).join(", ")} logged
           </p>
         </div>
       )}

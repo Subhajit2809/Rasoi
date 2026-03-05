@@ -121,7 +121,7 @@ function GroceryItemRow({
         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
           item.is_purchased
             ? "bg-[#D2691E] border-[#D2691E]"
-            : "border-gray-300 hover:border-[#D2691E]"
+            : "border-gray-300 dark:border-gray-600 hover:border-[#D2691E]"
         }`}
       >
         {item.is_purchased && (
@@ -130,19 +130,19 @@ function GroceryItemRow({
       </button>
       <div className="flex-1 flex items-center gap-2 min-w-0">
         {item.source === "auto" && !item.is_purchased && (
-          <span className="text-xs font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+          <span className="text-xs font-bold bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
             AUTO
           </span>
         )}
         <span
-          className={`text-sm text-gray-800 truncate ${item.is_purchased ? "line-through" : ""}`}
+          className={`text-sm text-gray-800 dark:text-gray-200 truncate ${item.is_purchased ? "line-through" : ""}`}
         >
           {item.item_name}
         </span>
       </div>
       <button
         onClick={() => onDelete(item.id)}
-        className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-xl leading-none w-7 h-7 flex items-center justify-center"
+        className="text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors flex-shrink-0 text-xl leading-none w-7 h-7 flex items-center justify-center"
       >
         ×
       </button>
@@ -165,11 +165,11 @@ function SectionGroup({
   return (
     <div className="mb-3">
       <div className="px-4 pb-1">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {storeLabel(category)}
         </span>
       </div>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50 mx-4">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-gray-50 dark:divide-dark-border-light mx-4">
         {items.map((item) => (
           <GroceryItemRow key={item.id} item={item} onToggle={onToggle} onDelete={onDelete} />
         ))}
@@ -430,22 +430,22 @@ export default function GroceryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF8F0]">
-        <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
+      <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg">
+        <div className="bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light px-4 py-4 flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-3 w-20" />
           </div>
           <Skeleton className="h-9 w-16 rounded-xl" />
         </div>
-        <div className="px-4 py-3 bg-white border-b border-gray-100">
+        <div className="px-4 py-3 bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light">
           <Skeleton className="h-12 w-full rounded-xl" />
         </div>
         <div className="pt-4 px-4 space-y-4">
           {["🥬 Sabzi Mandi", "🥛 Dairy & Other"].map((label) => (
             <div key={label}>
               <Skeleton className="h-3 w-28 mb-3" />
-              <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50">
+              <div className="bg-white dark:bg-dark-surface rounded-2xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-gray-50 dark:divide-dark-border-light">
                 {[0, 1, 2].map((j) => (
                   <div key={j} className="flex items-center gap-3 py-3 px-4">
                     <Skeleton className="w-6 h-6 rounded-full flex-shrink-0" />
@@ -465,12 +465,12 @@ export default function GroceryPage() {
   const totalPending = pending.length;
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pb-content-safe">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg pb-content-safe">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light px-4 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Grocery List 🛒</h1>
-          <p className="text-xs text-gray-500">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Grocery List 🛒</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {totalPending > 0
               ? `${totalPending} item${totalPending !== 1 ? "s" : ""} to buy`
               : purchased.length > 0
@@ -481,7 +481,7 @@ export default function GroceryPage() {
         <button
           onClick={handleShare}
           disabled={totalPending === 0}
-          className="flex items-center gap-1.5 px-3 py-2 bg-[#FFF8F0] border border-[#E8C9A0] rounded-xl text-sm font-semibold text-[#D2691E] active:scale-95 transition-transform disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#FFF8F0] dark:bg-dark-bg border border-[#E8C9A0] dark:border-dark-border rounded-xl text-sm font-semibold text-[#D2691E] active:scale-95 transition-transform disabled:opacity-40"
         >
           Share ↗
         </button>
@@ -512,7 +512,7 @@ export default function GroceryPage() {
       />
 
       {/* Add item input */}
-      <div className="px-4 py-3 bg-white border-b border-gray-100">
+      <div className="px-4 py-3 bg-white dark:bg-dark-surface border-b border-gray-100 dark:border-dark-border-light">
         <div className="flex gap-2">
           <input
             type="text"
@@ -520,7 +520,7 @@ export default function GroceryPage() {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             placeholder="Add item (e.g. Paneer, Atta…)"
-            className="flex-1 px-4 py-3 bg-[#FFF8F0] border border-[#E8C9A0] rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#D2691E] transition-colors"
+            className="flex-1 px-4 py-3 bg-[#FFF8F0] dark:bg-dark-bg border border-[#E8C9A0] dark:border-dark-border rounded-xl text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-[#D2691E] transition-colors"
           />
           <button
             onClick={handleAdd}
@@ -536,15 +536,15 @@ export default function GroceryPage() {
       {totalPending === 0 && purchased.length > 0 && (
         <div className="px-4 pt-10 text-center">
           <div className="text-5xl mb-3">🎉</div>
-          <p className="font-bold text-gray-800 text-lg">All stocked up!</p>
-          <p className="text-sm text-gray-400 mt-1">Everything on your list is purchased.</p>
+          <p className="font-bold text-gray-800 dark:text-gray-200 text-lg">All stocked up!</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Everything on your list is purchased.</p>
         </div>
       )}
       {totalPending === 0 && purchased.length === 0 && (
         <div className="px-4 pt-16 text-center">
           <div className="text-5xl mb-4">🛒</div>
-          <p className="font-semibold text-gray-700 text-lg">Your grocery list is empty</p>
-          <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+          <p className="font-semibold text-gray-700 dark:text-gray-300 text-lg">Your grocery list is empty</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-2 leading-relaxed">
             Add items above, or check{" "}
             <button
               onClick={() => router.push("/suggestions")}
@@ -585,16 +585,16 @@ export default function GroceryPage() {
         <div className="mx-4 mt-3 mb-2">
           <button
             onClick={() => setPurchasedExpanded((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-2xl shadow-sm"
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-dark-surface rounded-2xl shadow-sm dark:shadow-none"
           >
-            <span className="text-sm font-semibold text-gray-600">
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
               ✅ Purchased ({purchased.length})
             </span>
-            <span className="text-gray-400 text-sm">{purchasedExpanded ? "▲" : "▼"}</span>
+            <span className="text-gray-400 dark:text-gray-500 text-sm">{purchasedExpanded ? "▲" : "▼"}</span>
           </button>
 
           {purchasedExpanded && (
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50 mt-1">
+            <div className="bg-white dark:bg-dark-surface rounded-2xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-gray-50 dark:divide-dark-border-light mt-1">
               {purchased.map((item) => (
                 <GroceryItemRow
                   key={item.id}

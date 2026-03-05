@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "@/lib/env"; // Fail fast on missing env vars
 
 const APP_URL =
@@ -53,14 +54,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#D2691E",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#D2691E" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1210" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  // Lets content extend under the iPhone notch/home indicator
   viewportFit: "cover",
 };
+
+// Inline script to prevent flash of wrong theme (runs before React hydrates)
+const themeScript = `
+(function(){
+  try {
+    var t = localStorage.getItem('rasoi-theme') || 'system';
+    var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.classList.add('dark');
+  } catch(e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -68,10 +82,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-[#FFF8F0] text-gray-900 antialiased">
-        {children}
-        <InstallPrompt />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="bg-[#FFF8F0] dark:bg-dark-bg text-gray-900 dark:text-gray-100 antialiased transition-colors">
+        <ThemeProvider>
+          {children}
+          <InstallPrompt />
+        </ThemeProvider>
       </body>
     </html>
   );

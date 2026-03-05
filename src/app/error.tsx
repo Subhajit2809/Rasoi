@@ -8,13 +8,13 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#FFF8F0] dark:bg-dark-bg flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         <p className="text-5xl mb-4">🍳</p>
-        <h2 className="text-xl font-bold text-[#3D2010] mb-2">
+        <h2 className="text-xl font-bold text-[#3D2010] dark:text-gray-100 mb-2">
           Something went wrong
         </h2>
-        <p className="text-sm text-[#8B5E3C] mb-6 leading-relaxed">
+        <p className="text-sm text-[#8B5E3C] dark:text-gray-400 mb-6 leading-relaxed">
           {error.message || "An unexpected error occurred. Please try again."}
         </p>
         <button
