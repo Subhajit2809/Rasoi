@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 
-export type NavTab = "fridge" | "cook" | "grocery";
+export type NavTab = "fridge" | "cook" | "plan" | "grocery";
 
 const TABS: { id: NavTab; label: string; icon: string; href: string }[] = [
-  { id: "fridge",  label: "Fridge",  icon: "🧊", href: "/"         },
-  { id: "cook",    label: "Cook",    icon: "🍳", href: "/i-cooked" },
-  { id: "grocery", label: "Grocery", icon: "🛒", href: "/grocery"  },
+  { id: "fridge",  label: "Fridge",  icon: "🧊", href: "/"          },
+  { id: "cook",    label: "Cook",    icon: "🍳", href: "/i-cooked"  },
+  { id: "plan",    label: "Plan",    icon: "📅", href: "/meal-plan" },
+  { id: "grocery", label: "Grocery", icon: "🛒", href: "/grocery"   },
 ];
 
 interface BottomNavProps {

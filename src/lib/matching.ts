@@ -1,20 +1,27 @@
 import type { FridgeItem } from "@/types";
+import { resolveAliases } from "@/lib/aliases";
 
 /**
  * True if ingredient name plausibly refers to the same thing as a fridge/pantry
- * item name. Handles "onion" <-> "Pyaz (Onion)", "ginger-garlic paste" <-> "Adrak
- * (Ginger)", "tomatoes" <-> "Tamatar (Tomato)", etc.
+ * item name. Uses an alias map for Hindi ↔ English matching (jeera↔cumin,
+ * haldi↔turmeric, etc.) and checks containment across all alias variants.
  */
 export function nameMatches(ingredientRaw: string, itemName: string): boolean {
-  const a = ingredientRaw.toLowerCase();
-  const b = itemName.toLowerCase();
+  const aVariants = resolveAliases(ingredientRaw);
+  const bVariants = resolveAliases(itemName);
 
-  // Direct containment
-  if (b.includes(a) || a.includes(b)) return true;
+  // Containment check across all alias combinations
+  for (const a of aVariants) {
+    for (const b of bVariants) {
+      if (b.includes(a) || a.includes(b)) return true;
+    }
+  }
 
-  // Word-level: any >=4-char word from ingredient appears in item name
-  const words = a.split(/[\s\-,()]+/).filter((w) => w.length >= 4);
-  return words.some((w) => b.includes(w));
+  // Word-level: any >=3-char word from ingredient aliases found in item aliases
+  const words = aVariants.flatMap((v) =>
+    v.split(/[\s\-,()]+/).filter((w) => w.length >= 3)
+  );
+  return words.some((w) => bVariants.some((b) => b.includes(w)));
 }
 
 export function dietCompatible(recipeDiet: string, householdDiet: string): boolean {

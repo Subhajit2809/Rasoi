@@ -236,6 +236,8 @@ export type Database = {
           ingredients: { name: string; qty: string }[];
           instructions: string;
           diet_type: "veg" | "nonveg" | "eggetarian";
+          household_id: string | null;
+          created_by: string | null;
         };
         Insert: {
           id?: string;
@@ -246,6 +248,8 @@ export type Database = {
           ingredients?: { name: string; qty: string }[];
           instructions: string;
           diet_type: "veg" | "nonveg" | "eggetarian";
+          household_id?: string | null;
+          created_by?: string | null;
         };
         Update: {
           id?: string;
@@ -256,6 +260,42 @@ export type Database = {
           ingredients?: { name: string; qty: string }[];
           instructions?: string;
           diet_type?: "veg" | "nonveg" | "eggetarian";
+          household_id?: string | null;
+          created_by?: string | null;
+        };
+        Relationships: [];
+      };
+
+      meal_plans: {
+        Row: {
+          id: string;
+          household_id: string;
+          date: string;
+          meal_type: string;
+          recipe_id: string | null;
+          dish_name: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          date: string;
+          meal_type: string;
+          recipe_id?: string | null;
+          dish_name: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          household_id?: string;
+          date?: string;
+          meal_type?: string;
+          recipe_id?: string | null;
+          dish_name?: string;
+          created_by?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };

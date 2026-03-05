@@ -54,6 +54,8 @@ export interface Recipe {
   ingredients: { name: string; qty: string }[];
   instructions: string;
   diet_type: "veg" | "nonveg" | "eggetarian";
+  household_id?: string | null;
+  created_by?: string | null;
 }
 
 export interface GroceryItem {
@@ -71,4 +73,15 @@ export interface MealLog {
   household_id: string;
   dish_name: string;
   date: string;
+}
+
+export interface MealPlan {
+  id: string;
+  household_id: string;
+  date: string;
+  meal_type: "breakfast" | "lunch" | "dinner" | "snack";
+  recipe_id: string | null;
+  dish_name: string;
+  created_by: string | null;
+  created_at: string;
 }

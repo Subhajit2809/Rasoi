@@ -221,7 +221,7 @@ export default function ICookedPage() {
 
     async function load() {
       const [r, s] = await Promise.all([
-        fetchAllRecipes(),
+        fetchAllRecipes(household!.id),
         fetchPantryStaples(household!.id),
       ]);
       if (cancelled) return;

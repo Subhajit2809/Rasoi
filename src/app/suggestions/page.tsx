@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
@@ -12,6 +13,7 @@ import { getFreshnessForCategory } from "@/lib/freshness";
 import { insertCookedItem } from "@/lib/services/cooked";
 import { insertMealLog, fetchAllRecipes, fetchPantryStaples, fetchRecentMealDishes } from "@/lib/services/recipes";
 import { deleteFridgeItems } from "@/lib/services/fridge";
+import { fetchTodayPlannedDishes } from "@/lib/services/mealPlan";
 import type { Recipe, FridgeItem, PantryStaple } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,7 +51,8 @@ function scoreRecipes(
   fridgeItems: FridgeItem[],
   pantryStaples: PantryStaple[],
   recentDishNames: Set<string>,
-  householdDiet: string
+  householdDiet: string,
+  plannedDishNames: Set<string> = new Set()
 ): ScoredRecipe[] {
   const pantryNames = pantryStaples.map((p) => p.item_name);
 
@@ -88,9 +91,10 @@ function scoreRecipes(
 
       const total = recipe.ingredients.length;
       const matchPct = total > 0 ? matchCount / total : 0;
-      const urgencyBonus = expiringCount * 0.15;
+      const urgencyBonus = expiringCount * 0.20;
       const recencyPenalty = recentDishNames.has(recipe.name.toLowerCase()) ? 0.3 : 0;
-      const score = Math.max(0, matchPct + urgencyBonus - recencyPenalty);
+      const plannedPenalty = plannedDishNames.has(recipe.name.toLowerCase()) ? 0.2 : 0;
+      const score = Math.max(0, matchPct + urgencyBonus - recencyPenalty - plannedPenalty);
 
       return {
         recipe,
@@ -349,6 +353,7 @@ export default function SuggestionsPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [pantryStaples, setPantryStaples] = useState<PantryStaple[]>([]);
   const [recentDishes, setRecentDishes] = useState<Set<string>>(new Set());
+  const [plannedDishes, setPlannedDishes] = useState<Set<string>>(new Set());
   const [dataLoading, setDataLoading] = useState(true);
 
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
@@ -370,14 +375,16 @@ export default function SuggestionsPage() {
 
     async function loadData() {
       setDataLoading(true);
-      const [r, p, recent] = await Promise.all([
-        fetchAllRecipes(),
+      const [r, p, recent, planned] = await Promise.all([
+        fetchAllRecipes(household!.id),
         fetchPantryStaples(household!.id),
         fetchRecentMealDishes(household!.id),
+        fetchTodayPlannedDishes(household!.id),
       ]);
       setRecipes(r);
       setPantryStaples(p);
       setRecentDishes(recent);
+      setPlannedDishes(planned);
       setDataLoading(false);
     }
 
@@ -391,9 +398,10 @@ export default function SuggestionsPage() {
       fridgeItems,
       pantryStaples,
       recentDishes,
-      household.diet_pref
+      household.diet_pref,
+      plannedDishes
     );
-  }, [recipes, fridgeItems, pantryStaples, recentDishes, household]);
+  }, [recipes, fridgeItems, pantryStaples, recentDishes, household, plannedDishes]);
 
   const displayedRecipes = useMemo(() => {
     let filtered = scoredRecipes;
@@ -440,10 +448,17 @@ export default function SuggestionsPage() {
         >
           ‹
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Aaj Kya Banaye? 🍽️</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">Ranked by what you have</p>
         </div>
+        <Link
+          href="/add-recipe"
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#D2691E] text-white text-lg font-bold hover:bg-[#B85C18] transition-colors"
+          title="Add your own recipe"
+        >
+          +
+        </Link>
       </div>
 
       {/* Time filter chips */}

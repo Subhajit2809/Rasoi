@@ -216,7 +216,7 @@ export default function GroceryPage() {
     async function load() {
       setDataLoading(true);
       const [r, p] = await Promise.all([
-        fetchAllRecipes(),
+        fetchAllRecipes(household!.id),
         fetchPantryStaples(household!.id),
       ]);
       setRecipes(r);
