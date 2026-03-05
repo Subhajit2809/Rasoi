@@ -21,6 +21,7 @@ import {
   relativeTime,
   formatRemaining,
 } from "@/lib/freshness";
+import { useNotifications } from "@/hooks/useNotifications";
 import type { CookedItem, FridgeItem } from "@/types";
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -383,6 +384,8 @@ export default function Home() {
   const { members, loading: membLoading } = useHouseholdMembers(household?.id);
   const { items: cookedItems, loading: cookedLoading, markDone, refetch: refetchCooked } = useCookedItems(household?.id);
   const { items: fridgeItems, loading: fridgeLoading, refetch: refetchFridge } = useFridgeItems(household?.id);
+
+  useNotifications(cookedItems, fridgeItems);
 
   // ── Toast (from add-items page via sessionStorage) ──
   const [toast, setToast] = useState("");

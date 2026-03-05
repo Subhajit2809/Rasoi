@@ -10,6 +10,13 @@ import { Avatar } from "@/components/Avatar";
 import { Skeleton } from "@/components/Skeleton";
 import { generateInviteCode } from "@/lib/services/household";
 import { useTheme } from "@/components/ThemeProvider";
+import {
+  isNotificationSupported,
+  getPermissionState,
+  getUserPreference,
+  setUserPreference,
+  requestPermission,
+} from "@/lib/notifications";
 
 type ThemeOption = "light" | "dark" | "system";
 
@@ -293,6 +300,8 @@ export default function SettingsPage() {
 
         <ThemeSection />
 
+        <NotificationSection />
+
         <InviteSection householdId={household.id} />
       </div>
     </div>
@@ -330,6 +339,80 @@ function ThemeSection() {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function NotificationSection() {
+  const [supported, setSupported] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const sup = isNotificationSupported();
+    setSupported(sup);
+    if (sup) {
+      setPermission(getPermissionState());
+      setEnabled(getUserPreference() === "enabled");
+    }
+  }, []);
+
+  async function handleToggle() {
+    if (enabled) {
+      setUserPreference("disabled");
+      setEnabled(false);
+      return;
+    }
+
+    if (permission !== "granted") {
+      const result = await requestPermission();
+      setPermission(result);
+      if (result !== "granted") return;
+    }
+
+    setUserPreference("enabled");
+    setEnabled(true);
+  }
+
+  if (!supported) return null;
+
+  return (
+    <div className="bg-white dark:bg-dark-surface rounded-2xl p-5 border border-[#E8C9A0] dark:border-dark-border">
+      <h3 className="font-semibold text-[#3D2010] dark:text-gray-100 mb-1 flex items-center gap-2">
+        <span>🔔</span> Notifications
+      </h3>
+      <p className="text-xs text-[#8B5E3C] dark:text-gray-400 mb-4">
+        Get alerts when cooked food needs eating or fridge items are expiring.
+      </p>
+
+      {permission === "denied" ? (
+        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-3 py-2">
+          Notifications are blocked in your browser settings. Please enable them to receive alerts.
+        </p>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleToggle}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+              enabled
+                ? "bg-[#D2691E] text-white"
+                : "border-2 border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-300 hover:border-[#D2691E]"
+            }`}
+          >
+            {enabled ? "Enabled" : "Enable"}
+          </button>
+          {enabled && (
+            <button
+              type="button"
+              onClick={handleToggle}
+              className="flex-1 py-2.5 rounded-xl border-2 border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-300 text-sm font-medium hover:border-[#D2691E] transition-colors"
+            >
+              Disable
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

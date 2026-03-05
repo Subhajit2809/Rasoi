@@ -1,0 +1,1 @@
+self.addEventListener("notificationclick",function(n){n.notification.close(),n.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:!0}).then(function(n){for(var i=0;i<n.length;i++){var t=n[i];if(-1!==t.url.indexOf(self.location.origin)&&"focus"in t)return t.focus()}return self.clients.openWindow("/")}))});
