@@ -76,6 +76,11 @@ export const FRESHNESS_DAYS_BY_CATEGORY: Record<string, number> = {
   rice: 3,
   roti: 1,
   curry: 2,
+  snack: 1,
+  dessert: 2,
+  breakfast: 1,
+  "non-veg": 1,
+  side: 1,
 };
 
 export function getFreshnessForCategory(category: string): number {

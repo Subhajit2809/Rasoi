@@ -19,6 +19,11 @@ const REGIONS = [
   "Bengali",
   "Gujarati",
   "Maharashtrian",
+  "Punjabi",
+  "Hyderabadi",
+  "Kerala",
+  "Rajasthani",
+  "Indo-Chinese",
   "Pan-Indian",
 ];
 
@@ -26,7 +31,7 @@ const PANTRY: { category: string; emoji: string; items: string[] }[] = [
   {
     category: "Grains & Flours",
     emoji: "🌾",
-    items: ["Atta", "Chawal (Rice)", "Maida", "Besan", "Suji (Semolina)", "Poha", "Sabudana"],
+    items: ["Atta", "Chawal (Rice)", "Maida", "Besan", "Suji (Semolina)", "Poha", "Sabudana", "Makki Atta", "Dalia"],
   },
   {
     category: "Dals & Legumes",
@@ -42,13 +47,13 @@ const PANTRY: { category: string; emoji: string; items: string[] }[] = [
     items: [
       "Haldi", "Lal Mirch", "Jeera", "Dhania Powder",
       "Garam Masala", "Hing", "Sarso", "Amchur",
-      "Kasuri Methi", "Kali Mirch",
+      "Kasuri Methi", "Kali Mirch", "Ajwain", "Saunf (Fennel)",
     ],
   },
   {
     category: "Oils & Fats",
     emoji: "🫙",
-    items: ["Mustard Oil", "Refined Oil", "Ghee", "Coconut Oil"],
+    items: ["Mustard Oil", "Refined Oil", "Ghee", "Coconut Oil", "Butter"],
   },
   {
     category: "Essentials",
@@ -56,6 +61,8 @@ const PANTRY: { category: string; emoji: string; items: string[] }[] = [
     items: [
       "Namak (Salt)", "Cheeni (Sugar)", "Jaggery (Gur)",
       "Chai Patti", "Tomato Puree", "Imli (Tamarind)",
+      "Soy Sauce", "Vinegar", "Peanuts", "Badam (Almonds)",
+      "Kaju (Cashews)", "Kishmish (Raisins)", "Desiccated Coconut",
     ],
   },
 ];

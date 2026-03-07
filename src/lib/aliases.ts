@@ -108,6 +108,43 @@ const INGREDIENT_ALIASES: Record<string, string[]> = {
   toor:             ["toor dal", "arhar dal", "pigeon pea"],
   "toor dal":       ["toor", "arhar dal", "pigeon pea"],
   "arhar dal":      ["toor", "toor dal", "pigeon pea"],
+
+  // Additional Vegetables
+  parwal:           ["pointed gourd"],
+  "pointed gourd":  ["parwal"],
+  kela:             ["banana", "raw banana"],
+  "raw banana":     ["kela"],
+  "patta gobi":     ["cabbage"],
+  cabbage:          ["patta gobi"],
+  mushroom:         ["khumbi", "guchhi"],
+  khumbi:           ["mushroom"],
+  shakarkand:       ["sweet potato"],
+  "sweet potato":   ["shakarkand"],
+
+  // Additional Dals/Legumes
+  masoor:           ["masoor dal", "red lentils"],
+  "masoor dal":     ["masoor", "red lentils"],
+  "red lentils":    ["masoor", "masoor dal"],
+
+  // Dry Fruits
+  badam:            ["almonds", "almond"],
+  almonds:          ["badam"],
+  kaju:             ["cashews", "cashew"],
+  cashews:          ["kaju"],
+  kishmish:         ["raisins"],
+  raisins:          ["kishmish"],
+
+  // Additional Staples
+  suji:             ["semolina", "rava", "sooji"],
+  semolina:         ["suji", "rava", "sooji"],
+  rava:             ["suji", "semolina", "sooji"],
+  sabudana:         ["tapioca", "sago"],
+  tapioca:          ["sabudana", "sago"],
+  makki:            ["cornmeal", "corn flour", "makki ka atta"],
+  cornmeal:         ["makki", "makki ka atta"],
+  maggi:            ["instant noodles"],
+  pav:              ["bread rolls", "dinner rolls"],
+  "bread rolls":    ["pav", "dinner rolls"],
 };
 
 /**

@@ -58,6 +58,36 @@ export const PRESET_ITEMS: PresetItem[] = [
   { name: "Poha",                 category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 180 },
   { name: "Besan",                category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 180 },
   { name: "Coconut Milk",         category: "Pantry",          unit: "ml",    defaultQty: 200, shelfLife: 3   },
+  // Additional Vegetables
+  { name: "Karela (Bitter Gourd)",category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 4   },
+  { name: "Turai (Ridge Gourd)", category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 4   },
+  { name: "Parwal",              category: "Vegetables",      unit: "pcs",   defaultQty: 6,   shelfLife: 3   },
+  { name: "Drumstick",           category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 5   },
+  { name: "Raw Banana",          category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 5   },
+  { name: "Sweet Potato",        category: "Vegetables",      unit: "pcs",   defaultQty: 2,   shelfLife: 14  },
+  { name: "Cabbage",             category: "Vegetables",      unit: "pcs",   defaultQty: 1,   shelfLife: 7   },
+  { name: "Spring Onion",        category: "Vegetables",      unit: "bunch", defaultQty: 1,   shelfLife: 5   },
+  { name: "Mushroom",            category: "Vegetables",      unit: "g",     defaultQty: 200, shelfLife: 3   },
+  // Additional Dairy & Protein
+  { name: "Prawns",              category: "Dairy & Protein", unit: "g",     defaultQty: 500, shelfLife: 1   },
+  { name: "Chhena / Cottage Cheese",category: "Dairy & Protein",unit: "g",  defaultQty: 200, shelfLife: 2   },
+  { name: "Buttermilk",          category: "Dairy & Protein", unit: "ml",    defaultQty: 500, shelfLife: 3   },
+  // Additional Pantry
+  { name: "Masoor Dal",          category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
+  { name: "Urad Dal",            category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 365 },
+  { name: "Suji (Semolina)",     category: "Pantry",          unit: "g",     defaultQty: 500, shelfLife: 180 },
+  { name: "Sabudana",            category: "Pantry",          unit: "g",     defaultQty: 250, shelfLife: 365 },
+  { name: "Makki Atta (Cornmeal)",category: "Pantry",         unit: "g",     defaultQty: 500, shelfLife: 90  },
+  { name: "Noodles",             category: "Pantry",          unit: "pcs",   defaultQty: 2,   shelfLife: 180 },
+  { name: "Peanuts",             category: "Pantry",          unit: "g",     defaultQty: 250, shelfLife: 90  },
+  { name: "Badam (Almonds)",     category: "Pantry",          unit: "g",     defaultQty: 100, shelfLife: 180 },
+  { name: "Kaju (Cashews)",      category: "Pantry",          unit: "g",     defaultQty: 100, shelfLife: 180 },
+  { name: "Kishmish (Raisins)",  category: "Pantry",          unit: "g",     defaultQty: 100, shelfLife: 180 },
+  { name: "Desiccated Coconut",  category: "Pantry",          unit: "g",     defaultQty: 100, shelfLife: 180 },
+  { name: "Soy Sauce",           category: "Pantry",          unit: "ml",    defaultQty: 200, shelfLife: 365 },
+  { name: "Vinegar",             category: "Pantry",          unit: "ml",    defaultQty: 200, shelfLife: 365 },
+  { name: "Pav (Bread Rolls)",   category: "Pantry",          unit: "pcs",   defaultQty: 6,   shelfLife: 3   },
+  { name: "Maggi",               category: "Pantry",          unit: "pcs",   defaultQty: 4,   shelfLife: 180 },
 ];
 
 export const CATEGORIES: Category[] = ["Vegetables", "Dairy & Protein", "Pantry"];
