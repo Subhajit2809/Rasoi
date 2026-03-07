@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { useHousehold } from "@/hooks/useHousehold";
 import { PRESET_ITEMS, CATEGORIES, CATEGORY_EMOJI, calcExpiry, type Category, type PresetItem } from "@/lib/ingredients";
@@ -208,14 +209,23 @@ export default function AddItemsPage() {
             <h2 className="text-lg font-bold text-[#3D2010] dark:text-gray-100">Add to Fridge</h2>
             <p className="text-xs text-[#8B5E3C] dark:text-gray-400">Tap items to select, then adjust qty</p>
           </div>
-          <button
-            type="button"
-            onClick={dismiss}
-            className="w-8 h-8 rounded-full bg-[#F5E6D3] dark:bg-dark-border flex items-center justify-center text-[#5C3A1E] dark:text-gray-200 hover:bg-[#E8C9A0] dark:hover:bg-dark-border-light transition-colors text-lg leading-none"
-            aria-label="Close"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/add-items/photo"
+              className="w-8 h-8 rounded-full bg-[#D2691E] flex items-center justify-center text-white hover:bg-[#B85C18] transition-colors text-sm"
+              title="Scan groceries with camera"
+            >
+              📷
+            </Link>
+            <button
+              type="button"
+              onClick={dismiss}
+              className="w-8 h-8 rounded-full bg-[#F5E6D3] dark:bg-dark-border flex items-center justify-center text-[#5C3A1E] dark:text-gray-200 hover:bg-[#E8C9A0] dark:hover:bg-dark-border-light transition-colors text-lg leading-none"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 px-4 pb-3 flex-shrink-0 border-b border-[#F5E6D3] dark:border-dark-border-light">
