@@ -9,8 +9,25 @@ import { useUser } from "@/hooks/useUser";
 
 const DIET_OPTIONS = [
   { value: "veg" as const,        label: "Vegetarian",  emoji: "🥦", desc: "No meat or eggs" },
+  { value: "vegan" as const,      label: "Vegan",       emoji: "🌱", desc: "No animal products" },
+  { value: "jain" as const,       label: "Jain",        emoji: "🙏", desc: "No onion, garlic, root veg" },
   { value: "eggetarian" as const, label: "Eggetarian",  emoji: "🥚", desc: "Veg + eggs OK" },
   { value: "nonveg" as const,     label: "Non-Veg",     emoji: "🍗", desc: "All foods" },
+];
+
+type DietPref = typeof DIET_OPTIONS[number]["value"];
+
+const SPICE_OPTIONS = [
+  { value: "mild" as const,   label: "Mild",   emoji: "🫑" },
+  { value: "medium" as const, label: "Medium", emoji: "🌶️" },
+  { value: "spicy" as const,  label: "Spicy",  emoji: "🔥" },
+];
+
+const COMPLEXITY_OPTIONS = [
+  { value: "quick" as const,     label: "Quick",     desc: "Under 20 min" },
+  { value: "medium" as const,    label: "Medium",    desc: "20-40 min" },
+  { value: "elaborate" as const, label: "Elaborate", desc: "40+ min" },
+  { value: "any" as const,       label: "Any",       desc: "No preference" },
 ];
 
 const REGIONS = [
@@ -120,8 +137,10 @@ export default function OnboardingPage() {
   const [householdSize, setHouseholdSize] = useState(2);
 
   // step 2
-  const [dietPref, setDietPref] = useState<"veg" | "eggetarian" | "nonveg">("veg");
-  const [region,   setRegion]   = useState("");
+  const [dietPref, setDietPref]       = useState<DietPref>("veg");
+  const [region,   setRegion]         = useState("");
+  const [spiceLevel, setSpiceLevel]   = useState<"mild" | "medium" | "spicy">("medium");
+  const [complexity, setComplexity]   = useState<"quick" | "medium" | "elaborate" | "any">("any");
 
   // step 3
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -210,7 +229,7 @@ export default function OnboardingPage() {
     // so a direct update is fine — RLS will allow it.
     const { error: upErr } = await supabase
       .from("households")
-      .update({ diet_pref: dietPref, region })
+      .update({ diet_pref: dietPref, region, spice_level: spiceLevel, complexity })
       .eq("id", householdId);
 
     if (upErr) {
@@ -387,6 +406,52 @@ export default function OnboardingPage() {
                       }`}
                     >
                       {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Spice level */}
+              <div>
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-3">
+                  Spice level
+                </label>
+                <div className="flex gap-2">
+                  {SPICE_OPTIONS.map(({ value, label, emoji }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setSpiceLevel(value)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                        spiceLevel === value
+                          ? "bg-[#D2691E] text-white"
+                          : "border-2 border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]"
+                      }`}
+                    >
+                      <span>{emoji}</span> {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Complexity preference */}
+              <div>
+                <label className="block text-sm font-semibold text-[#5C3A1E] dark:text-gray-200 mb-3">
+                  Cooking time preference
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLEXITY_OPTIONS.map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setComplexity(value)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                        complexity === value
+                          ? "bg-[#D2691E] border-[#D2691E] text-white"
+                          : "bg-white dark:bg-dark-surface border-[#E8C9A0] dark:border-dark-border text-[#5C3A1E] dark:text-gray-200 hover:border-[#D2691E]"
+                      }`}
+                    >
+                      {label} <span className="text-xs opacity-75">({desc})</span>
                     </button>
                   ))}
                 </div>

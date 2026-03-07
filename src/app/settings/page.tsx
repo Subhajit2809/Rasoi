@@ -213,8 +213,23 @@ function MembersSection({
 
 const DIET_LABEL: Record<string, string> = {
   veg: "Vegetarian 🥦",
+  vegan: "Vegan 🌱",
+  jain: "Jain 🙏",
   eggetarian: "Eggetarian 🥚",
   nonveg: "Non-Veg 🍗",
+};
+
+const SPICE_LABEL: Record<string, string> = {
+  mild: "Mild 🫑",
+  medium: "Medium 🌶️",
+  spicy: "Spicy 🔥",
+};
+
+const COMPLEXITY_LABEL: Record<string, string> = {
+  quick: "Quick (<20 min)",
+  medium: "Medium (20-40 min)",
+  elaborate: "Elaborate (40+ min)",
+  any: "Any",
 };
 
 export default function SettingsPage() {
@@ -289,6 +304,14 @@ export default function SettingsPage() {
               value={DIET_LABEL[household.diet_pref] ?? household.diet_pref}
             />
             <InfoRow label="Household size" value={`${household.household_size} people`} />
+            <InfoRow
+              label="Spice level"
+              value={SPICE_LABEL[household.spice_level] ?? household.spice_level ?? "Medium 🌶️"}
+            />
+            <InfoRow
+              label="Cooking time"
+              value={COMPLEXITY_LABEL[household.complexity] ?? household.complexity ?? "Any"}
+            />
           </div>
         </div>
 

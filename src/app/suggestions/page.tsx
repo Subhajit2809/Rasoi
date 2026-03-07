@@ -8,7 +8,7 @@ import { useHousehold } from "@/hooks/useHousehold";
 import { useFridgeItems } from "@/hooks/useFridgeItems";
 import { BottomNav } from "@/components/BottomNav";
 import { Skeleton } from "@/components/Skeleton";
-import { nameMatches, dietCompatible, isExpiringSoon } from "@/lib/matching";
+import { nameMatches, dietCompatible, complexityCompatible, isExpiringSoon } from "@/lib/matching";
 import { getFreshnessForCategory } from "@/lib/freshness";
 import { insertCookedItem } from "@/lib/services/cooked";
 import { insertMealLog, fetchAllRecipes, fetchPantryStaples, fetchRecentMealDishes } from "@/lib/services/recipes";
@@ -52,12 +52,14 @@ function scoreRecipes(
   pantryStaples: PantryStaple[],
   recentDishNames: Set<string>,
   householdDiet: string,
-  plannedDishNames: Set<string> = new Set()
+  plannedDishNames: Set<string> = new Set(),
+  complexityPref: string = "any"
 ): ScoredRecipe[] {
   const pantryNames = pantryStaples.map((p) => p.item_name);
 
   return recipes
     .filter((r) => dietCompatible(r.diet_type, householdDiet))
+    .filter((r) => complexityCompatible(r.cook_time_mins, complexityPref))
     .map((recipe) => {
       const usedFridgeIds = new Set<string>();
       const deductIds: string[] = [];
@@ -399,7 +401,8 @@ export default function SuggestionsPage() {
       pantryStaples,
       recentDishes,
       household.diet_pref,
-      plannedDishes
+      plannedDishes,
+      household.complexity ?? "any"
     );
   }, [recipes, fridgeItems, pantryStaples, recentDishes, household, plannedDishes]);
 

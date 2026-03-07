@@ -27,7 +27,21 @@ export function nameMatches(ingredientRaw: string, itemName: string): boolean {
 export function dietCompatible(recipeDiet: string, householdDiet: string): boolean {
   if (householdDiet === "nonveg") return true;
   if (householdDiet === "eggetarian") return recipeDiet === "veg" || recipeDiet === "eggetarian";
+  if (householdDiet === "vegan") return recipeDiet === "veg"; // vegan excludes eggetarian too
+  if (householdDiet === "jain") return recipeDiet === "veg"; // jain is a subset of veg
   return recipeDiet === "veg";
+}
+
+/**
+ * Returns true if recipe cook_time_mins fits the household complexity preference.
+ * quick = under 20 min, medium = 20-40 min, elaborate = over 40 min.
+ */
+export function complexityCompatible(cookTimeMins: number, preference: string): boolean {
+  if (preference === "any") return true;
+  if (preference === "quick") return cookTimeMins <= 20;
+  if (preference === "medium") return cookTimeMins > 20 && cookTimeMins <= 40;
+  if (preference === "elaborate") return cookTimeMins > 40;
+  return true;
 }
 
 export function isExpiringSoon(item: FridgeItem): boolean {

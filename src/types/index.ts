@@ -4,8 +4,10 @@ export interface Household {
   id: string;
   name: string;
   region: string;
-  diet_pref: "veg" | "nonveg" | "eggetarian";
+  diet_pref: "veg" | "nonveg" | "eggetarian" | "vegan" | "jain";
   household_size: number;
+  spice_level: "mild" | "medium" | "spicy";
+  complexity: "quick" | "medium" | "elaborate" | "any";
   created_at: string;
 }
 
